@@ -12,15 +12,182 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Instadown" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="description" content="Download Instagram posts, reels, and videos. Free, fast, no login." />
 
-  <!-- SEO -->
-  <meta name="description" content="Download Instagram posts, reels, and videos easily. Free, fast, no login required." />
-
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css" />
+<style>
+/* ===== RESET ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #e0e5ec;
+  --surface: #e8edf4;
+  --shadow-dark: #b8bec9;
+  --shadow-light: #ffffff;
+  --text-primary: #2d3748;
+  --text-secondary: #718096;
+  --text-muted: #a0aec0;
+  --accent: #667eea;
+  --accent-2: #764ba2;
+  --accent-soft: rgba(102,126,234,0.12);
+  --success: #48bb78;
+  --error: #fc8181;
+  --neu-shadow: 6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light);
+  --neu-shadow-sm: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light);
+  --neu-shadow-lg: 10px 10px 24px var(--shadow-dark), -10px -10px 24px var(--shadow-light);
+  --neu-inset: inset 4px 4px 10px var(--shadow-dark), inset -4px -4px 10px var(--shadow-light);
+  --neu-pressed: inset 3px 3px 8px var(--shadow-dark), inset -3px -3px 8px var(--shadow-light);
+}
+
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ===== BG BLOBS ===== */
+.bg-blob { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.35; pointer-events: none; z-index: 0; }
+.blob-1 { width: 400px; height: 400px; background: radial-gradient(circle,#c3d0e8,#dde3ee); top:-120px; right:-100px; }
+.blob-2 { width: 350px; height: 350px; background: radial-gradient(circle,#d4c5f9,#e0ddf5); bottom:80px; left:-100px; }
+
+/* ===== LAYOUT ===== */
+.app-wrapper { position: relative; z-index: 1; max-width: 540px; margin: 0 auto; padding: 24px 20px 48px; }
+
+/* ===== HEADER ===== */
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; padding-top: 8px; }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+  width: 42px; height: 42px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  display: flex; align-items: center; justify-content: center; color: white;
+  box-shadow: 4px 4px 10px rgba(102,126,234,0.35), -2px -2px 8px rgba(255,255,255,0.7);
+}
+.logo-text-wrap { display: flex; flex-direction: column; line-height: 1; }
+.logo-text { font-size: 1.35rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em; }
+.logo-sub { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; margin-top: 2px; }
+.header-badge {
+  font-size: 0.72rem; font-weight: 700; color: var(--accent);
+  background: var(--accent-soft); padding: 6px 12px; border-radius: 100px;
+  letter-spacing: 0.04em; text-transform: uppercase; box-shadow: var(--neu-shadow-sm);
+}
+
+/* ===== HERO ===== */
+.hero { text-align: center; margin-bottom: 32px; animation: fadeUp 0.6s ease both; }
+.hero-title { font-size: clamp(1.75rem,6vw,2.25rem); font-weight: 800; line-height: 1.2; letter-spacing: -0.03em; margin-bottom: 12px; }
+.gradient-text { background: linear-gradient(135deg,var(--accent),var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero-sub { font-size: 0.95rem; color: var(--text-secondary); font-weight: 500; }
+
+/* ===== CARDS ===== */
+.card { background: var(--surface); border-radius: 32px; box-shadow: var(--neu-shadow-lg); padding: 28px 24px; margin-bottom: 20px; animation: fadeUp 0.5s ease both; }
+
+/* ===== INPUT ===== */
+.input-label { display: flex; align-items: center; gap: 7px; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
+.input-row { display: flex; gap: 12px; align-items: center; margin-bottom: 18px; }
+.neu-input {
+  flex: 1; background: var(--bg); border: none; outline: none;
+  border-radius: 18px; padding: 14px 18px;
+  font-family: 'Nunito', sans-serif; font-size: 0.9rem; font-weight: 500; color: var(--text-primary);
+  box-shadow: var(--neu-inset); transition: box-shadow 0.2s ease; min-width: 0;
+}
+.neu-input::placeholder { color: var(--text-muted); font-weight: 400; }
+.neu-input:focus { box-shadow: var(--neu-inset), 0 0 0 2px rgba(102,126,234,0.25); }
+
+/* ===== BUTTONS ===== */
+.neu-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: 'Nunito', sans-serif; font-weight: 700; cursor: pointer; border: none;
+  border-radius: 18px; transition: all 0.15s ease; touch-action: manipulation; user-select: none;
+}
+.primary-btn {
+  background: linear-gradient(135deg,var(--accent),var(--accent-2)); color: white;
+  padding: 14px 20px; font-size: 0.9rem; white-space: nowrap; min-width: 100px;
+  box-shadow: 4px 4px 12px rgba(102,126,234,0.4), -2px -2px 8px rgba(255,255,255,0.6);
+}
+.primary-btn:hover { box-shadow: 6px 6px 16px rgba(102,126,234,0.5),-2px -2px 10px rgba(255,255,255,0.7); transform: translateY(-1px); }
+.primary-btn:active { box-shadow: 2px 2px 6px rgba(102,126,234,0.35); transform: translateY(1px); }
+.primary-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+
+.download-btn {
+  background: linear-gradient(135deg,var(--success),#38a169); color: white;
+  padding: 14px 28px; font-size: 0.95rem; width: 100%;
+  box-shadow: 4px 4px 12px rgba(72,187,120,0.4),-2px -2px 8px rgba(255,255,255,0.6);
+}
+.download-btn:hover { box-shadow: 6px 6px 16px rgba(72,187,120,0.5),-2px -2px 10px rgba(255,255,255,0.7); transform: translateY(-1px); }
+.download-btn:active { box-shadow: 2px 2px 6px rgba(72,187,120,0.35); transform: translateY(1px); }
+.download-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+
+.ghost-btn { background: var(--bg); color: var(--accent); padding: 12px 24px; font-size: 0.9rem; box-shadow: var(--neu-shadow-sm); margin-top: 4px; }
+.ghost-btn:hover { transform: translateY(-1px); }
+.ghost-btn:active { box-shadow: var(--neu-pressed); transform: translateY(0); }
+
+.icon-btn { width: 38px; height: 38px; border-radius: 50%; background: var(--bg); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--neu-shadow-sm); color: var(--text-secondary); transition: all 0.15s ease; touch-action: manipulation; }
+.icon-btn:hover { color: var(--text-primary); }
+.icon-btn:active { box-shadow: var(--neu-pressed); }
+
+/* ===== CHIPS ===== */
+.type-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); background: var(--bg); padding: 6px 12px; border-radius: 100px; box-shadow: var(--neu-shadow-sm); }
+
+/* ===== LOADING ===== */
+.loading-card { text-align: center; }
+.loader-wrap { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.neu-spinner { width: 52px; height: 52px; border-radius: 50%; background: var(--bg); box-shadow: var(--neu-shadow); position: relative; }
+.neu-spinner::after { content:''; position:absolute; inset:8px; border-radius:50%; border:3px solid transparent; border-top-color:var(--accent); border-right-color:var(--accent-2); animation:spin 0.9s linear infinite; }
+.loading-text { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; }
+
+/* ===== RESULT ===== */
+.result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.result-badge { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); background: var(--accent-soft); padding: 5px 12px; border-radius: 100px; box-shadow: var(--neu-shadow-sm); }
+.media-preview { width: 100%; border-radius: 20px; overflow: hidden; box-shadow: var(--neu-shadow); margin-bottom: 18px; background: var(--bg); min-height: 80px; display: flex; align-items: center; justify-content: center; }
+.media-preview img { width: 100%; height: auto; display: block; max-height: 420px; object-fit: cover; }
+.media-preview video { width: 100%; max-height: 420px; display: block; }
+.media-placeholder { padding: 32px; color: var(--text-muted); font-size: 0.85rem; text-align: center; }
+.meta-row { margin-bottom: 16px; }
+.meta-item { font-size: 0.82rem; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+
+/* ===== ERROR ===== */
+.error-card { text-align: center; border: 1.5px solid rgba(252,129,129,0.2); }
+.error-icon { width: 60px; height: 60px; border-radius: 50%; background: var(--bg); box-shadow: var(--neu-shadow); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: var(--error); }
+.error-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+.error-msg { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5; }
+
+/* ===== HOW IT WORKS ===== */
+.how-section { margin-top: 12px; animation: fadeUp 0.6s ease 0.3s both; }
+.section-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 16px; padding-left: 4px; }
+.steps-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.step-card { background: var(--surface); border-radius: 24px; box-shadow: var(--neu-shadow-sm); padding: 20px 14px; text-align: center; }
+.step-num { font-size: 1.5rem; font-weight: 800; background: linear-gradient(135deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom: 10px; line-height:1; }
+.step-text { font-size: 0.775rem; color: var(--text-secondary); font-weight: 600; line-height: 1.45; }
+
+/* ===== FOOTER ===== */
+.footer { text-align: center; margin-top: 36px; animation: fadeUp 0.6s ease 0.4s both; }
+.footer p { font-size: 0.78rem; color: var(--text-muted); font-weight: 500; }
+.footer-note { margin-top: 4px; font-size: 0.72rem !important; opacity: 0.7; }
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@keyframes spin { to { transform:rotate(360deg); } }
+@keyframes slideIn { from { opacity:0; transform:translateY(12px) scale(0.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+.slide-in { animation: slideIn 0.3s ease both; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 400px) {
+  .app-wrapper { padding: 20px 16px 40px; }
+  .steps-grid { grid-template-columns: 1fr; }
+  .input-row { flex-direction: column; }
+  .primary-btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+</style>
 </head>
 <body>
 
@@ -29,7 +196,6 @@
 
   <div class="app-wrapper">
 
-    <!-- Header -->
     <header class="header">
       <div class="logo">
         <div class="logo-icon">
@@ -47,13 +213,11 @@
       <div class="header-badge">Free &amp; Fast</div>
     </header>
 
-    <!-- Hero -->
     <section class="hero">
       <h1 class="hero-title">Download <span class="gradient-text">Instagram</span><br/>Content Instantly</h1>
       <p class="hero-sub">Posts · Reels · Videos — no login, no watermark</p>
     </section>
 
-    <!-- Input Card -->
     <div class="card input-card">
       <label class="input-label" for="urlInput">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -63,23 +227,14 @@
         Paste Instagram URL
       </label>
       <div class="input-row">
-        <input
-          type="url"
-          id="urlInput"
-          class="neu-input"
-          placeholder="https://www.instagram.com/p/..."
-          autocomplete="off"
-          spellcheck="false"
-        />
+        <input type="url" id="urlInput" class="neu-input" placeholder="https://www.instagram.com/p/..." autocomplete="off" spellcheck="false" />
         <button class="neu-btn primary-btn" id="fetchBtn" onclick="handleFetch()">
-          <span class="btn-text">Fetch</span>
-          <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"/>
-            <polyline points="12 5 19 12 12 19"/>
+          <span>Fetch</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
           </svg>
         </button>
       </div>
-
       <div class="type-chips">
         <span class="chip">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -96,7 +251,6 @@
       </div>
     </div>
 
-    <!-- Loading State -->
     <div class="card loading-card" id="loadingCard" style="display:none;">
       <div class="loader-wrap">
         <div class="neu-spinner"></div>
@@ -104,24 +258,20 @@
       </div>
     </div>
 
-    <!-- Result Card -->
     <div class="card result-card" id="resultCard" style="display:none;">
       <div class="result-header">
         <div class="result-badge" id="resultBadge">Photo</div>
-        <button class="icon-btn close-btn" onclick="resetUI()" aria-label="Clear result">
+        <button class="icon-btn" onclick="resetUI()" aria-label="Clear result">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
-
       <div class="media-preview" id="mediaPreview"></div>
-
       <div class="meta-row" id="metaRow" style="display:none;">
         <div class="meta-item" id="authorMeta"></div>
       </div>
-
-      <div class="download-row">
+      <div>
         <button class="neu-btn download-btn" id="downloadBtn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -133,7 +283,6 @@
       </div>
     </div>
 
-    <!-- Error Card -->
     <div class="card error-card" id="errorCard" style="display:none;">
       <div class="error-icon">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -147,39 +296,253 @@
       <button class="neu-btn ghost-btn" onclick="resetUI()">Try Again</button>
     </div>
 
-    <!-- How It Works -->
     <section class="how-section">
       <h2 class="section-title">How it works</h2>
       <div class="steps-grid">
-        <div class="step-card">
-          <div class="step-num">01</div>
-          <p class="step-text">Copy the Instagram post, reel, or video URL</p>
-        </div>
-        <div class="step-card">
-          <div class="step-num">02</div>
-          <p class="step-text">Paste the URL and click Fetch</p>
-        </div>
-        <div class="step-card">
-          <div class="step-num">03</div>
-          <p class="step-text">Preview and download your media instantly</p>
-        </div>
+        <div class="step-card"><div class="step-num">01</div><p class="step-text">Copy the Instagram post, reel, or video URL</p></div>
+        <div class="step-card"><div class="step-num">02</div><p class="step-text">Paste the URL and tap Fetch</p></div>
+        <div class="step-card"><div class="step-num">03</div><p class="step-text">Preview and download instantly</p></div>
       </div>
     </section>
 
-    <!-- Footer -->
     <footer class="footer">
-      <p>Instadown by <strong>ATRX</strong> &copy; 2025 · For personal use only</p>
+      <p>Instadown by <strong>ATRX</strong> &copy; 2025 · Personal use only</p>
       <p class="footer-note">We don't store your URLs or media</p>
     </footer>
 
   </div>
 
-  <script src="app.js"></script>
+<script>
+// ── Proxy & helpers ───────────────────────────────────────
+const PROXY = 'https://api.allorigins.win/raw?url=';
+
+function extractShortcode(url) {
+  const m = url.match(/instagram\.com\/(?:p|reel|reels|tv|stories\/[^/]+)\/([A-Za-z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+function setLoading(msg) {
+  document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('errorCard').style.display = 'none';
+  document.getElementById('loadingCard').style.display = 'block';
+  document.getElementById('loadingText').textContent = msg || 'Fetching media…';
+}
+
+function showError(title, msg) {
+  document.getElementById('loadingCard').style.display = 'none';
+  document.getElementById('resultCard').style.display = 'none';
+  const ec = document.getElementById('errorCard');
+  ec.style.display = 'block';
+  ec.classList.remove('slide-in'); void ec.offsetWidth; ec.classList.add('slide-in');
+  document.getElementById('errorTitle').textContent = title;
+  document.getElementById('errorMsg').textContent = msg;
+}
+
+function showResult({ mediaUrl, thumbUrl, type, author }) {
+  document.getElementById('loadingCard').style.display = 'none';
+  document.getElementById('errorCard').style.display = 'none';
+  const rc = document.getElementById('resultCard');
+  rc.style.display = 'block';
+  rc.classList.remove('slide-in'); void rc.offsetWidth; rc.classList.add('slide-in');
+
+  document.getElementById('resultBadge').textContent = type === 'video' ? '🎬 Reel / Video' : '🖼️ Photo';
+
+  const preview = document.getElementById('mediaPreview');
+  preview.innerHTML = '';
+  if (type === 'video' && mediaUrl) {
+    const v = document.createElement('video');
+    v.src = mediaUrl; v.controls = true; v.playsInline = true; v.preload = 'metadata';
+    preview.appendChild(v);
+  } else if (thumbUrl || mediaUrl) {
+    const img = document.createElement('img');
+    img.src = thumbUrl || mediaUrl; img.alt = 'Preview'; img.loading = 'lazy';
+    preview.appendChild(img);
+  } else {
+    preview.innerHTML = '<p class="media-placeholder">Preview unavailable.<br/>Click Download to save.</p>';
+  }
+
+  const metaRow = document.getElementById('metaRow');
+  if (author) {
+    metaRow.style.display = 'block';
+    document.getElementById('authorMeta').textContent = '@' + author;
+  } else { metaRow.style.display = 'none'; }
+
+  document.getElementById('downloadBtn').onclick = () => triggerDownload(mediaUrl || thumbUrl, type);
+}
+
+async function triggerDownload(url, type) {
+  if (!url) return;
+  const btn = document.getElementById('downloadBtn');
+  btn.disabled = true;
+  btn.textContent = 'Downloading…';
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const ext = type === 'video' ? 'mp4' : 'jpg';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'instadown_' + Date.now() + '.' + ext;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch {
+    window.open(url, '_blank');
+  }
+  btn.disabled = false;
+  btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download`;
+}
+
+function resetUI() {
+  ['resultCard','errorCard','loadingCard'].forEach(id => document.getElementById(id).style.display = 'none');
+  document.getElementById('urlInput').value = '';
+  document.getElementById('urlInput').focus();
+}
+
+// ── Tier 1: SaveIG via allorigins ─────────────────────────
+async function fetchSaveIG(url) {
+  const apiUrl = 'https://v3.saveig.app/api/ajaxSearch';
+  const body = `q=${encodeURIComponent(url)}&t=media&lang=en`;
+  // Route through allorigins to avoid CORS
+  const proxied = PROXY + encodeURIComponent(apiUrl);
+  const res = await fetch(proxied, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body
+  });
+  if (!res.ok) throw new Error('SaveIG failed');
+  const text = await res.text();
+  const data = JSON.parse(text);
+  if (!data.data) throw new Error('No data');
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(data.data, 'text/html');
+  const videoA = doc.querySelector('a[href*=".mp4"]');
+  const imgEl  = doc.querySelector('img[src*="cdninstagram"], img[src*="fbcdn"], img[src*="instagram"]');
+  if (!videoA && !imgEl) throw new Error('No media');
+
+  return {
+    mediaUrl: videoA ? videoA.href : null,
+    thumbUrl: imgEl ? imgEl.src : null,
+    type: videoA ? 'video' : 'photo',
+    author: null
+  };
+}
+
+// ── Tier 2: Scrape Instagram embed page via allorigins ────
+async function fetchEmbedPage(url) {
+  const sc = extractShortcode(url);
+  if (!sc) throw new Error('No shortcode');
+  const embedUrl = `https://www.instagram.com/p/${sc}/embed/captioned/`;
+  const res = await fetch(PROXY + encodeURIComponent(embedUrl));
+  if (!res.ok) throw new Error('Embed failed');
+  const html = await res.text();
+
+  // Pull highest-res image
+  const imgs = [...html.matchAll(/https:\/\/[^"'\s]+\.(?:jpg|jpeg|webp)[^"'\s]*/g)].map(m => m[0]);
+  const vids = [...html.matchAll(/https:\/\/[^"'\s]+\.mp4[^"'\s]*/g)].map(m => m[0]);
+  const authorMatch = html.match(/"username":"([^"]+)"/);
+
+  const thumbUrl = imgs.find(i => i.includes('cdninstagram') || i.includes('fbcdn')) || imgs[0];
+  const mediaUrl = vids[0] ? decodeURIComponent(vids[0]).replace(/\\u0026/g,'&') : null;
+
+  if (!thumbUrl && !mediaUrl) throw new Error('No media in embed');
+
+  return {
+    mediaUrl,
+    thumbUrl: thumbUrl ? decodeURIComponent(thumbUrl).replace(/\\u0026/g,'&') : null,
+    type: mediaUrl ? 'video' : 'photo',
+    author: authorMatch ? authorMatch[1] : null
+  };
+}
+
+// ── Tier 3: OG tags via allorigins ───────────────────────
+async function fetchOGTags(url) {
+  const res = await fetch(PROXY + encodeURIComponent(url));
+  if (!res.ok) throw new Error('OG fetch failed');
+  const html = await res.text();
+
+  const ogImg = html.match(/property="og:image"\s+content="([^"]+)"/i);
+  const ogVid = html.match(/property="og:video(?::url)?"\s+content="([^"]+)"/i);
+  const author = html.match(/"owner":\{"username":"([^"]+)"/i) || html.match(/"username":"([^"]+)"/i);
+
+  if (!ogImg && !ogVid) throw new Error('No OG tags');
+  return {
+    mediaUrl: ogVid ? ogVid[1] : null,
+    thumbUrl: ogImg ? ogImg[1] : null,
+    type: ogVid ? 'video' : 'photo',
+    author: author ? author[1] : null
+  };
+}
+
+// ── Tier 4: ddinstagram.com API ───────────────────────────
+async function fetchDDInstagram(url) {
+  const sc = extractShortcode(url);
+  if (!sc) throw new Error('No shortcode');
+  // ddinstagram replaces instagram.com with ddinstagram.com for direct media
+  const ddUrl = url.replace('www.instagram.com', 'ddinstagram.com').replace('instagram.com', 'ddinstagram.com');
+  const res = await fetch(PROXY + encodeURIComponent(ddUrl));
+  if (!res.ok) throw new Error('ddinstagram failed');
+  const html = await res.text();
+
+  const ogImg = html.match(/property="og:image"\s+content="([^"]+)"/i);
+  const ogVid = html.match(/property="og:video(?::url)?"\s+content="([^"]+)"/i);
+  if (!ogImg && !ogVid) throw new Error('No media from ddinstagram');
+
+  return {
+    mediaUrl: ogVid ? ogVid[1] : null,
+    thumbUrl: ogImg ? ogImg[1] : null,
+    type: ogVid ? 'video' : 'photo',
+    author: null
+  };
+}
+
+// ── Main ─────────────────────────────────────────────────
+async function handleFetch() {
+  const input = document.getElementById('urlInput').value.trim();
+  const btn   = document.getElementById('fetchBtn');
+
+  if (!input) { document.getElementById('urlInput').focus(); return; }
+  if (!/instagram\.com/.test(input)) {
+    showError('Invalid URL', 'Please enter a valid Instagram link.');
+    return;
+  }
+
+  btn.disabled = true;
+
+  const strategies = [
+    { label: 'Connecting…',             fn: () => fetchSaveIG(input) },
+    { label: 'Trying embed method…',    fn: () => fetchEmbedPage(input) },
+    { label: 'Reading page metadata…',  fn: () => fetchOGTags(input) },
+    { label: 'Final attempt…',          fn: () => fetchDDInstagram(input) },
+  ];
+
+  for (const s of strategies) {
+    setLoading(s.label);
+    try {
+      const result = await s.fn();
+      if (result && (result.thumbUrl || result.mediaUrl)) {
+        showResult(result);
+        btn.disabled = false;
+        return;
+      }
+    } catch(e) {
+      console.warn('[Instadown]', s.label, e.message);
+    }
+  }
+
+  btn.disabled = false;
+  showError('Media not found', 'This post may be private or Instagram is blocking requests. Only public posts can be downloaded.');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('urlInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleFetch();
+  });
+});
+</script>
+
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
-      });
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
     }
   </script>
 </body>
