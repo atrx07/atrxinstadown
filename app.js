@@ -1,21 +1,13 @@
 /* ===========================
-   Grabify — app.js
-   3-tier Instagram media fetch
+   Instadown ATRX — app.js
+   Public API-based fetch
    =========================== */
-
-const CORS_PROXY = 'https://corsproxy.io/?';
 
 // ── helpers ──────────────────────────────────────────────
 
 function extractShortcode(url) {
   const match = url.match(/instagram\.com\/(?:p|reel|reels|tv|stories\/[^/]+)\/([A-Za-z0-9_-]+)/);
   return match ? match[1] : null;
-}
-
-function mediaType(url) {
-  if (!url) return 'photo';
-  if (/\.mp4|\.mov|video/i.test(url)) return 'video';
-  return 'photo';
 }
 
 function setLoading(msg = 'Fetching media…') {
@@ -47,13 +39,12 @@ function showResult({ mediaUrl, thumbUrl, type, author }) {
   void rc.offsetWidth;
   rc.classList.add('slide-in');
 
-  // badge
   const badge = document.getElementById('resultBadge');
   badge.textContent = type === 'video' ? '🎬 Reel / Video' : '🖼️ Photo';
 
-  // preview
   const preview = document.getElementById('mediaPreview');
   preview.innerHTML = '';
+
   if (type === 'video' && mediaUrl) {
     const vid = document.createElement('video');
     vid.src = mediaUrl;
@@ -71,7 +62,6 @@ function showResult({ mediaUrl, thumbUrl, type, author }) {
     preview.innerHTML = '<p class="media-placeholder">Preview not available.<br/>Click Download to save.</p>';
   }
 
-  // author meta
   const metaRow = document.getElementById('metaRow');
   const authorEl = document.getElementById('authorMeta');
   if (author) {
@@ -86,7 +76,6 @@ function showResult({ mediaUrl, thumbUrl, type, author }) {
     metaRow.style.display = 'none';
   }
 
-  // download button
   const dlBtn = document.getElementById('downloadBtn');
   dlBtn.onclick = () => downloadMedia(mediaUrl || thumbUrl, type);
 }
@@ -102,18 +91,15 @@ async function downloadMedia(url, type) {
     Downloading…`;
 
   try {
-    const proxied = CORS_PROXY + encodeURIComponent(url);
-    const res = await fetch(proxied);
+    const res = await fetch(url);
     const blob = await res.blob();
     const ext = type === 'video' ? 'mp4' : 'jpg';
-    const filename = `grabify_${Date.now()}.${ext}`;
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = filename;
+    a.download = `instadown_${Date.now()}.${ext}`;
     a.click();
     URL.revokeObjectURL(a.href);
   } catch {
-    // fallback: open in new tab
     window.open(url, '_blank');
   }
 
@@ -135,99 +121,115 @@ function resetUI() {
   document.getElementById('urlInput').focus();
 }
 
-// ── Tier 1: oEmbed ────────────────────────────────────────
+// ── Tier 1: SaveIG ────────────────────────────────────────
 
-async function fetchOEmbed(url) {
-  const endpoint = `https://graph.facebook.com/v18.0/instagram_oembed?url=${encodeURIComponent(url)}&fields=thumbnail_url,author_name,type,media_type&access_token=anonymous`;
-  // oEmbed public endpoint (no token needed for basic)
-  const oembed = `https://api.instagram.com/oembed/?url=${encodeURIComponent(url)}&omitscript=true`;
-  const res = await fetch(CORS_PROXY + encodeURIComponent(oembed));
-  if (!res.ok) throw new Error('oEmbed failed');
+async function fetchViaSaveIG(url) {
+  const res = await fetch('https://v3.saveig.app/api/ajaxSearch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `q=${encodeURIComponent(url)}&t=media&lang=en`
+  });
+  if (!res.ok) throw new Error('SaveIG failed');
   const data = await res.json();
-  if (!data.thumbnail_url) throw new Error('No thumbnail in oEmbed');
+  if (!data.data) throw new Error('No data');
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(data.data, 'text/html');
+  const videoEl = doc.querySelector('a[href*=".mp4"]');
+  const imgEl = doc.querySelector('img[src*="cdninstagram"], img[src*="fbcdn"], img[src*="instagram"]');
+
+  if (!videoEl && !imgEl) throw new Error('No media in response');
+
   return {
-    mediaUrl: null, // oEmbed only gives thumbnail
-    thumbUrl: data.thumbnail_url,
-    type: 'photo',
-    author: data.author_name || null
+    mediaUrl: videoEl ? videoEl.href : null,
+    thumbUrl: imgEl ? imgEl.src : null,
+    type: videoEl ? 'video' : 'photo',
+    author: null
   };
 }
 
-// ── Tier 2: Embed page scrape ─────────────────────────────
+// ── Tier 2: snapinsta.app ─────────────────────────────────
 
-async function fetchEmbedPage(url) {
-  const shortcode = extractShortcode(url);
-  if (!shortcode) throw new Error('No shortcode');
-  const embedUrl = `https://www.instagram.com/p/${shortcode}/embed/`;
-  const res = await fetch(CORS_PROXY + encodeURIComponent(embedUrl));
-  if (!res.ok) throw new Error('Embed page failed');
-  const html = await res.text();
+async function fetchViaSnapInsta(url) {
+  // Get token first
+  const pageRes = await fetch('https://snapinsta.app/');
+  if (!pageRes.ok) throw new Error('snapinsta page failed');
+  const pageHtml = await pageRes.text();
+  const tokenMatch = pageHtml.match(/name="token"\s+value="([^"]+)"/);
+  if (!tokenMatch) throw new Error('No token');
 
-  // Extract image from embed HTML
-  const imgMatch = html.match(/src="(https:\/\/[^"]*\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
-  const vidMatch = html.match(/src="(https:\/\/[^"]*\.mp4[^"]*)"/i);
-  const authorMatch = html.match(/"username":"([^"]+)"/);
+  const res = await fetch('https://snapinsta.app/action.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `url=${encodeURIComponent(url)}&token=${tokenMatch[1]}&lang=en`
+  });
+  if (!res.ok) throw new Error('snapinsta action failed');
+  const data = await res.json();
+  if (!data.data) throw new Error('No data');
 
-  if (!imgMatch && !vidMatch) throw new Error('No media in embed page');
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(data.data, 'text/html');
+  const videoEl = doc.querySelector('a[href*=".mp4"]');
+  const imgEl = doc.querySelector('img');
 
-  const isVideo = !!vidMatch;
+  if (!videoEl && !imgEl) throw new Error('No media');
+
   return {
-    mediaUrl: vidMatch ? decodeURIComponent(vidMatch[1]).replace(/\\u0026/g, '&') : null,
-    thumbUrl: imgMatch ? decodeURIComponent(imgMatch[1]).replace(/\\u0026/g, '&') : null,
+    mediaUrl: videoEl ? videoEl.href : null,
+    thumbUrl: imgEl ? imgEl.src : null,
+    type: videoEl ? 'video' : 'photo',
+    author: null
+  };
+}
+
+// ── Tier 3: fastdl.app ────────────────────────────────────
+
+async function fetchViaFastDL(url) {
+  const res = await fetch('https://fastdl.app/api/convert', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  });
+  if (!res.ok) throw new Error('fastdl failed');
+  const data = await res.json();
+
+  const isVideo = data.type === 'video' || !!(data.url || '').match(/\.mp4/);
+  const mediaUrl = isVideo ? data.url : null;
+  const thumbUrl = data.thumbnail || (!isVideo ? data.url : null);
+  if (!mediaUrl && !thumbUrl) throw new Error('No media from fastdl');
+
+  return {
+    mediaUrl,
+    thumbUrl,
     type: isVideo ? 'video' : 'photo',
-    author: authorMatch ? authorMatch[1] : null
+    author: data.username || null
   };
 }
 
-// ── Tier 3: Picuki proxy ──────────────────────────────────
+// ── Tier 4: inflact.com ───────────────────────────────────
 
-async function fetchPicuki(url) {
+async function fetchViaInflact(url) {
   const shortcode = extractShortcode(url);
   if (!shortcode) throw new Error('No shortcode');
 
-  // Try Picuki-style approach via an open instaloader-like endpoint
-  const apiUrl = `https://www.picuki.com/media/${shortcode}`;
-  const res = await fetch(CORS_PROXY + encodeURIComponent(apiUrl));
-  if (!res.ok) throw new Error('Picuki failed');
+  const res = await fetch(`https://inflact.com/downloader/instagram/post/?url=${encodeURIComponent(url)}`, {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  });
+  if (!res.ok) throw new Error('inflact failed');
   const html = await res.text();
 
-  const imgMatch = html.match(/<img[^>]+class="post-image"[^>]+src="([^"]+)"/i)
-    || html.match(/property="og:image"\s+content="([^"]+)"/i);
-  const vidMatch = html.match(/<video[^>]+src="([^"]+)"/i)
-    || html.match(/property="og:video"\s+content="([^"]+)"/i);
-  const authorMatch = html.match(/class="profile-name"[^>]*>\s*([^<]+)</i)
-    || html.match(/property="og:site_name"\s+content="([^"]+)"/i);
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const videoEl = doc.querySelector('a[href*=".mp4"], video source');
+  const imgEl = doc.querySelector('img.result__img, img[src*="cdninstagram"]');
 
-  if (!imgMatch && !vidMatch) throw new Error('Picuki: no media found');
+  if (!videoEl && !imgEl) throw new Error('No media from inflact');
 
   return {
-    mediaUrl: vidMatch ? vidMatch[1] : null,
-    thumbUrl: imgMatch ? imgMatch[1] : null,
-    type: vidMatch ? 'video' : 'photo',
-    author: authorMatch ? authorMatch[1].trim() : null
-  };
-}
-
-// ── Tier 4: og:image fallback via CORS proxy ──────────────
-
-async function fetchOGImage(url) {
-  const res = await fetch(CORS_PROXY + encodeURIComponent(url));
-  if (!res.ok) throw new Error('OG fetch failed');
-  const html = await res.text();
-
-  const ogImg = html.match(/property="og:image"\s+content="([^"]+)"/i)
-    || html.match(/name="og:image"\s+content="([^"]+)"/i);
-  const ogVid = html.match(/property="og:video(?::url)?"\s+content="([^"]+)"/i);
-  const authorMatch = html.match(/"owner":\{"username":"([^"]+)"/i)
-    || html.match(/"username":"([^"]+)"/i);
-
-  if (!ogImg && !ogVid) throw new Error('No OG media');
-
-  return {
-    mediaUrl: ogVid ? ogVid[1] : null,
-    thumbUrl: ogImg ? ogImg[1] : null,
-    type: ogVid ? 'video' : 'photo',
-    author: authorMatch ? authorMatch[1] : null
+    mediaUrl: videoEl ? (videoEl.href || videoEl.src) : null,
+    thumbUrl: imgEl ? imgEl.src : null,
+    type: videoEl ? 'video' : 'photo',
+    author: null
   };
 }
 
@@ -243,17 +245,17 @@ async function handleFetch() {
   }
 
   if (!/instagram\.com/.test(input)) {
-    showError('Invalid URL', 'Please enter a valid Instagram link (instagram.com/p/…)');
+    showError('Invalid URL', 'Please enter a valid Instagram link (instagram.com/p/… or /reel/…)');
     return;
   }
 
   btn.disabled = true;
 
   const strategies = [
-    { label: 'Trying oEmbed…', fn: () => fetchOEmbed(input) },
-    { label: 'Trying embed page…', fn: () => fetchEmbedPage(input) },
-    { label: 'Trying Picuki…', fn: () => fetchPicuki(input) },
-    { label: 'Final attempt…', fn: () => fetchOGImage(input) }
+    { label: 'Connecting to server…',   fn: () => fetchViaSaveIG(input) },
+    { label: 'Trying alternate source…', fn: () => fetchViaSnapInsta(input) },
+    { label: 'Trying another source…',  fn: () => fetchViaFastDL(input) },
+    { label: 'Final attempt…',          fn: () => fetchViaInflact(input) }
   ];
 
   for (const s of strategies) {
@@ -266,14 +268,14 @@ async function handleFetch() {
         return;
       }
     } catch (e) {
-      // try next
+      console.warn(`[Instadown] ${s.label} failed:`, e.message);
     }
   }
 
   btn.disabled = false;
   showError(
     'Media not found',
-    'This post may be private, a story, or Instagram blocked our request. Only public posts can be downloaded.'
+    'This post may be private, or all sources are temporarily unavailable. Only public posts can be downloaded.'
   );
 }
 
