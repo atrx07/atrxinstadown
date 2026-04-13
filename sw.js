@@ -1,14 +1,12 @@
 /* ================================
-   Grabify Service Worker
+   Instadown ATRX — Service Worker
    Caches app shell for offline load
    ================================ */
 
-const CACHE_NAME = 'grabify-v1';
+const CACHE_NAME = 'instadown-v2';
 const SHELL = [
   '/',
   '/index.html',
-  '/style.css',
-  '/app.js',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
@@ -33,17 +31,21 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Fetch — cache-first for shell, network-first for API calls
+// Fetch — cache-first for shell, network-first for API/media calls
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Always go network for external media/API requests
+  // Always go network for external requests
   if (
     url.hostname.includes('instagram.com') ||
     url.hostname.includes('cdninstagram') ||
+    url.hostname.includes('fbcdn') ||
+    url.hostname.includes('allorigins') ||
     url.hostname.includes('corsproxy') ||
-    url.hostname.includes('picuki') ||
-    url.hostname.includes('fbcdn')
+    url.hostname.includes('saveig') ||
+    url.hostname.includes('snapinsta') ||
+    url.hostname.includes('imginn') ||
+    url.hostname.includes('ddinstagram')
   ) {
     return; // let browser handle it
   }

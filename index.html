@@ -141,6 +141,7 @@ body {
 .neu-spinner { width: 52px; height: 52px; border-radius: 50%; background: var(--bg); box-shadow: var(--neu-shadow); position: relative; }
 .neu-spinner::after { content:''; position:absolute; inset:8px; border-radius:50%; border:3px solid transparent; border-top-color:var(--accent); border-right-color:var(--accent-2); animation:spin 0.9s linear infinite; }
 .loading-text { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; }
+.loading-sub { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; margin-top: -8px; }
 
 /* ===== RESULT ===== */
 .result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
@@ -151,6 +152,14 @@ body {
 .media-placeholder { padding: 32px; color: var(--text-muted); font-size: 0.85rem; text-align: center; }
 .meta-row { margin-bottom: 16px; }
 .meta-item { font-size: 0.82rem; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+
+/* ===== MULTI-ITEM ===== */
+.multi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+.multi-thumb { position: relative; border-radius: 14px; overflow: hidden; box-shadow: var(--neu-shadow-sm); background: var(--bg); aspect-ratio: 1; cursor: pointer; }
+.multi-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.multi-thumb .play-badge { position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.6); color: white; border-radius: 6px; padding: 2px 6px; font-size: 0.65rem; font-weight: 700; }
+.multi-dl-btn { width: 100%; margin-top: 8px; }
+.multi-section-title { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
 
 /* ===== ERROR ===== */
 .error-card { text-align: center; border: 1.5px solid rgba(252,129,129,0.2); }
@@ -183,6 +192,7 @@ body {
   .steps-grid { grid-template-columns: 1fr; }
   .input-row { flex-direction: column; }
   .primary-btn { width: 100%; }
+  .multi-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -248,6 +258,10 @@ body {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
           Videos
         </span>
+        <span class="chip">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Carousels
+        </span>
       </div>
     </div>
 
@@ -255,6 +269,7 @@ body {
       <div class="loader-wrap">
         <div class="neu-spinner"></div>
         <p class="loading-text" id="loadingText">Fetching media…</p>
+        <p class="loading-sub" id="loadingSub"></p>
       </div>
     </div>
 
@@ -267,20 +282,7 @@ body {
           </svg>
         </button>
       </div>
-      <div class="media-preview" id="mediaPreview"></div>
-      <div class="meta-row" id="metaRow" style="display:none;">
-        <div class="meta-item" id="authorMeta"></div>
-      </div>
-      <div>
-        <button class="neu-btn download-btn" id="downloadBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          Download
-        </button>
-      </div>
+      <div id="resultBody"></div>
     </div>
 
     <div class="card error-card" id="errorCard" style="display:none;">
@@ -313,19 +315,62 @@ body {
   </div>
 
 <script>
-// ── Proxy & helpers ───────────────────────────────────────
-const PROXY = 'https://api.allorigins.win/raw?url=';
+// ══════════════════════════════════════════════════
+//  INSTADOWN · ATRX — Multi-tier Instagram scraper
+//  Strategy order:
+//   1. SaveIG  (via allorigins CORS proxy)
+//   2. SnapInsta (via allorigins CORS proxy)
+//   3. Imginn  (scrape their viewer page)
+//   4. ddinstagram.com (Instagram CDN mirror)
+//   5. Embed page scrape (Instagram /p/{sc}/embed)
+// ══════════════════════════════════════════════════
+
+// Two reliable free CORS proxies — fallback between them
+const PROXIES = [
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.io/?url=',
+];
+
+let activeProxy = PROXIES[0];
+
+async function proxiedFetch(url, opts = {}) {
+  // Try primary proxy first, fall back to secondary
+  for (const proxy of PROXIES) {
+    try {
+      const res = await fetch(proxy + encodeURIComponent(url), {
+        ...opts,
+        signal: AbortSignal.timeout(12000)
+      });
+      if (res.ok) { activeProxy = proxy; return res; }
+    } catch { /* try next */ }
+  }
+  throw new Error('All proxies failed for: ' + url);
+}
+
+// ── Helpers ───────────────────────────────────────
 
 function extractShortcode(url) {
+  // Handles /p/, /reel/, /reels/, /tv/, /stories/ formats
   const m = url.match(/instagram\.com\/(?:p|reel|reels|tv|stories\/[^/]+)\/([A-Za-z0-9_-]+)/);
   return m ? m[1] : null;
 }
 
-function setLoading(msg) {
+function cleanUrl(raw) {
+  // Decode unicode escapes and HTML entities Instagram embeds into HTML
+  return raw
+    .replace(/\\u0026/g, '&')
+    .replace(/&amp;/g, '&')
+    .replace(/\\u003C/g, '<')
+    .replace(/\\u003E/g, '>')
+    .replace(/\\/g, '');
+}
+
+function setLoading(msg, sub = '') {
   document.getElementById('resultCard').style.display = 'none';
   document.getElementById('errorCard').style.display = 'none';
   document.getElementById('loadingCard').style.display = 'block';
   document.getElementById('loadingText').textContent = msg || 'Fetching media…';
+  document.getElementById('loadingSub').textContent = sub;
 }
 
 function showError(title, msg) {
@@ -338,201 +383,409 @@ function showError(title, msg) {
   document.getElementById('errorMsg').textContent = msg;
 }
 
-function showResult({ mediaUrl, thumbUrl, type, author }) {
+const DL_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+
+function showResult({ items, type, author }) {
+  // items: [{ mediaUrl, thumbUrl, type }]
   document.getElementById('loadingCard').style.display = 'none';
   document.getElementById('errorCard').style.display = 'none';
   const rc = document.getElementById('resultCard');
   rc.style.display = 'block';
   rc.classList.remove('slide-in'); void rc.offsetWidth; rc.classList.add('slide-in');
 
-  document.getElementById('resultBadge').textContent = type === 'video' ? '🎬 Reel / Video' : '🖼️ Photo';
+  const isMulti = items.length > 1;
+  document.getElementById('resultBadge').textContent =
+    isMulti ? `🖼️ Carousel · ${items.length} items` :
+    type === 'video' ? '🎬 Reel / Video' : '🖼️ Photo';
 
-  const preview = document.getElementById('mediaPreview');
-  preview.innerHTML = '';
-  if (type === 'video' && mediaUrl) {
-    const v = document.createElement('video');
-    v.src = mediaUrl; v.controls = true; v.playsInline = true; v.preload = 'metadata';
-    preview.appendChild(v);
-  } else if (thumbUrl || mediaUrl) {
-    const img = document.createElement('img');
-    img.src = thumbUrl || mediaUrl; img.alt = 'Preview'; img.loading = 'lazy';
-    preview.appendChild(img);
-  } else {
-    preview.innerHTML = '<p class="media-placeholder">Preview unavailable.<br/>Click Download to save.</p>';
+  const body = document.getElementById('resultBody');
+  body.innerHTML = '';
+
+  if (author) {
+    const meta = document.createElement('div');
+    meta.className = 'meta-row';
+    meta.innerHTML = `<div class="meta-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      @${author}
+    </div>`;
+    body.appendChild(meta);
   }
 
-  const metaRow = document.getElementById('metaRow');
-  if (author) {
-    metaRow.style.display = 'block';
-    document.getElementById('authorMeta').textContent = '@' + author;
-  } else { metaRow.style.display = 'none'; }
+  if (isMulti) {
+    // Carousel grid view
+    const title = document.createElement('p');
+    title.className = 'multi-section-title';
+    title.textContent = 'All items — tap to download';
+    body.appendChild(title);
 
-  document.getElementById('downloadBtn').onclick = () => triggerDownload(mediaUrl || thumbUrl, type);
+    const grid = document.createElement('div');
+    grid.className = 'multi-grid';
+
+    items.forEach((item, i) => {
+      const thumb = document.createElement('div');
+      thumb.className = 'multi-thumb';
+      thumb.title = `Download item ${i + 1}`;
+      thumb.onclick = () => triggerDownload(item.mediaUrl || item.thumbUrl, item.type, i + 1);
+
+      const img = document.createElement('img');
+      img.src = item.thumbUrl || item.mediaUrl;
+      img.alt = `Item ${i + 1}`;
+      img.loading = 'lazy';
+      thumb.appendChild(img);
+
+      if (item.type === 'video') {
+        const badge = document.createElement('span');
+        badge.className = 'play-badge';
+        badge.textContent = '▶ Video';
+        thumb.appendChild(badge);
+      }
+
+      grid.appendChild(thumb);
+    });
+    body.appendChild(grid);
+
+    // Download all button
+    const dlAll = document.createElement('button');
+    dlAll.className = 'neu-btn download-btn multi-dl-btn';
+    dlAll.innerHTML = `${DL_ICON} Download All (${items.length})`;
+    dlAll.onclick = () => downloadAll(items);
+    body.appendChild(dlAll);
+
+  } else {
+    // Single item
+    const first = items[0];
+    const preview = document.createElement('div');
+    preview.className = 'media-preview';
+
+    if (first.type === 'video' && first.mediaUrl) {
+      const v = document.createElement('video');
+      v.src = first.mediaUrl; v.controls = true; v.playsInline = true; v.preload = 'metadata';
+      preview.appendChild(v);
+    } else if (first.thumbUrl || first.mediaUrl) {
+      const img = document.createElement('img');
+      img.src = first.thumbUrl || first.mediaUrl;
+      img.alt = 'Preview'; img.loading = 'lazy';
+      preview.appendChild(img);
+    } else {
+      preview.innerHTML = '<p class="media-placeholder">Preview unavailable.<br/>Click Download to save.</p>';
+    }
+    body.appendChild(preview);
+
+    const dlBtn = document.createElement('button');
+    dlBtn.className = 'neu-btn download-btn';
+    dlBtn.innerHTML = `${DL_ICON} Download`;
+    dlBtn.onclick = () => triggerDownload(first.mediaUrl || first.thumbUrl, first.type);
+    body.appendChild(dlBtn);
+  }
 }
 
-async function triggerDownload(url, type) {
+async function triggerDownload(url, type, idx = '') {
   if (!url) return;
-  const btn = document.getElementById('downloadBtn');
-  btn.disabled = true;
-  btn.textContent = 'Downloading…';
+  const ext = type === 'video' ? 'mp4' : 'jpg';
+  const filename = `instadown_${Date.now()}${idx ? '_' + idx : ''}.${ext}`;
+
   try {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    const ext = type === 'video' ? 'mp4' : 'jpg';
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'instadown_' + Date.now() + '.' + ext;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  } catch {
-    window.open(url, '_blank');
+    // Try blob download for same-origin or CORS-enabled CDN URLs
+    const res = await fetch(url, { signal: AbortSignal.timeout(30000) });
+    if (res.ok) {
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      return;
+    }
+  } catch { /* fall through */ }
+
+  // Fallback: open in new tab (user can long-press save on mobile)
+  window.open(url, '_blank');
+}
+
+async function downloadAll(items) {
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    await triggerDownload(item.mediaUrl || item.thumbUrl, item.type, i + 1);
+    // Small delay between downloads to avoid browser blocking
+    if (i < items.length - 1) await new Promise(r => setTimeout(r, 600));
   }
-  btn.disabled = false;
-  btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download`;
 }
 
 function resetUI() {
-  ['resultCard','errorCard','loadingCard'].forEach(id => document.getElementById(id).style.display = 'none');
+  ['resultCard','errorCard','loadingCard'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
   document.getElementById('urlInput').value = '';
   document.getElementById('urlInput').focus();
 }
 
-// ── Tier 1: SaveIG via allorigins ─────────────────────────
+// ══════════════════════════════════════════════════
+//  TIER 1: SaveIG  (proxied POST to their API)
+//  Their API accepts a URL, returns HTML with media links
+// ══════════════════════════════════════════════════
 async function fetchSaveIG(url) {
   const apiUrl = 'https://v3.saveig.app/api/ajaxSearch';
   const body = `q=${encodeURIComponent(url)}&t=media&lang=en`;
-  // Route through allorigins to avoid CORS
-  const proxied = PROXY + encodeURIComponent(apiUrl);
-  const res = await fetch(proxied, {
+  const res = await proxiedFetch(apiUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
   });
-  if (!res.ok) throw new Error('SaveIG failed');
   const text = await res.text();
   const data = JSON.parse(text);
-  if (!data.data) throw new Error('No data');
+  if (!data.data) throw new Error('SaveIG: no data field');
 
   const parser = new DOMParser();
   const doc = parser.parseFromString(data.data, 'text/html');
-  const videoA = doc.querySelector('a[href*=".mp4"]');
-  const imgEl  = doc.querySelector('img[src*="cdninstagram"], img[src*="fbcdn"], img[src*="instagram"]');
-  if (!videoA && !imgEl) throw new Error('No media');
 
-  return {
-    mediaUrl: videoA ? videoA.href : null,
-    thumbUrl: imgEl ? imgEl.src : null,
-    type: videoA ? 'video' : 'photo',
-    author: null
-  };
+  const items = [];
+
+  // Carousel: multiple download rows
+  const dlItems = doc.querySelectorAll('.download-items .download-item');
+  if (dlItems.length > 1) {
+    dlItems.forEach(item => {
+      const videoA = item.querySelector('a[href*=".mp4"]');
+      const imgEl  = item.querySelector('img');
+      items.push({
+        mediaUrl: videoA ? videoA.href : null,
+        thumbUrl: imgEl ? imgEl.src : null,
+        type: videoA ? 'video' : 'photo'
+      });
+    });
+  } else {
+    const videoA = doc.querySelector('a[href*=".mp4"]');
+    const imgEl  = doc.querySelector('img[src*="cdninstagram"], img[src*="fbcdn"]');
+    if (!videoA && !imgEl) throw new Error('SaveIG: no media found');
+    items.push({
+      mediaUrl: videoA ? videoA.href : null,
+      thumbUrl: imgEl ? imgEl.src : null,
+      type: videoA ? 'video' : 'photo'
+    });
+  }
+
+  if (!items.length) throw new Error('SaveIG: empty items');
+
+  const author = (data.data.match(/"username":"([^"]+)"/) || [])[1] || null;
+  return { items, type: items[0].type, author };
 }
 
-// ── Tier 2: Scrape Instagram embed page via allorigins ────
+// ══════════════════════════════════════════════════
+//  TIER 2: SnapInsta  (proxied — token + POST)
+//  They use a hidden token in their page, then POST to action.php
+// ══════════════════════════════════════════════════
+async function fetchSnapInsta(url) {
+  // Fetch their homepage to get the CSRF token
+  const pageRes = await proxiedFetch('https://snapinsta.app/');
+  const pageHtml = await pageRes.text();
+  const tokenMatch = pageHtml.match(/name="token"\s+value="([^"]+)"/);
+  if (!tokenMatch) throw new Error('SnapInsta: no token');
+
+  const res = await proxiedFetch('https://snapinsta.app/action.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `url=${encodeURIComponent(url)}&token=${tokenMatch[1]}&lang=en`
+  });
+
+  const data = await res.json();
+  if (!data.data) throw new Error('SnapInsta: no data');
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(data.data, 'text/html');
+
+  const items = [];
+  const rows = doc.querySelectorAll('.download-item, .download-link');
+  if (rows.length > 1) {
+    rows.forEach(row => {
+      const videoA = row.querySelector('a[href*=".mp4"]');
+      const imgEl  = row.querySelector('img');
+      if (videoA || imgEl) {
+        items.push({
+          mediaUrl: videoA ? videoA.href : null,
+          thumbUrl: imgEl ? imgEl.src : null,
+          type: videoA ? 'video' : 'photo'
+        });
+      }
+    });
+  }
+
+  if (!items.length) {
+    const videoA = doc.querySelector('a[href*=".mp4"]');
+    const imgEl  = doc.querySelector('img');
+    if (!videoA && !imgEl) throw new Error('SnapInsta: no media');
+    items.push({
+      mediaUrl: videoA ? videoA.href : null,
+      thumbUrl: imgEl ? imgEl.src : null,
+      type: videoA ? 'video' : 'photo'
+    });
+  }
+
+  return { items, type: items[0].type, author: null };
+}
+
+// ══════════════════════════════════════════════════
+//  TIER 3: Imginn viewer scrape
+//  imginn.com mirrors Instagram post pages publicly.
+//  We scrape their page for the actual CDN URLs.
+// ══════════════════════════════════════════════════
+async function fetchImginn(url) {
+  const sc = extractShortcode(url);
+  if (!sc) throw new Error('Imginn: no shortcode');
+
+  const imginnUrl = `https://imginn.com/p/${sc}/`;
+  const res = await proxiedFetch(imginnUrl);
+  const html = await res.text();
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  const items = [];
+
+  // Imginn wraps carousel items in .swiper-slide
+  const slides = doc.querySelectorAll('.swiper-slide, .img-wrap, .media-wrap');
+  if (slides.length > 0) {
+    slides.forEach(slide => {
+      const video = slide.querySelector('video source, video');
+      const img   = slide.querySelector('img');
+      const videoSrc = video ? (video.src || video.getAttribute('src')) : null;
+      const imgSrc   = img ? img.src : null;
+      if (videoSrc || imgSrc) {
+        items.push({
+          mediaUrl: videoSrc ? cleanUrl(videoSrc) : null,
+          thumbUrl: imgSrc   ? cleanUrl(imgSrc)   : null,
+          type: videoSrc ? 'video' : 'photo'
+        });
+      }
+    });
+  }
+
+  if (!items.length) {
+    // Fallback: regex scan for Instagram CDN URLs
+    const cdnImgs = [...html.matchAll(/https:\/\/[^"'\s]+(?:cdninstagram|fbcdn)[^"'\s]*\.(?:jpg|jpeg|webp)[^"'\s]*/g)].map(m => cleanUrl(m[0]));
+    const cdnVids = [...html.matchAll(/https:\/\/[^"'\s]+(?:cdninstagram|fbcdn)[^"'\s]*\.mp4[^"'\s]*/g)].map(m => cleanUrl(m[0]));
+
+    if (!cdnImgs.length && !cdnVids.length) throw new Error('Imginn: no CDN URLs found');
+
+    const authorMatch = html.match(/"username":"([^"]+)"/);
+
+    // De-duplicate CDN URLs (Instagram often has multiple quality variants)
+    const uniqueImgs = [...new Set(cdnImgs)].slice(0, 10);
+    const uniqueVids = [...new Set(cdnVids)].slice(0, 5);
+
+    if (uniqueVids.length) {
+      items.push({ mediaUrl: uniqueVids[0], thumbUrl: uniqueImgs[0] || null, type: 'video' });
+    } else {
+      uniqueImgs.slice(0, 4).forEach(src => items.push({ mediaUrl: null, thumbUrl: src, type: 'photo' }));
+    }
+
+    return { items, type: items[0].type, author: authorMatch ? authorMatch[1] : null };
+  }
+
+  const authorMatch = html.match(/class="username"[^>]*>@?([^<]+)<|"username":"([^"]+)"/);
+  const author = authorMatch ? (authorMatch[1] || authorMatch[2]).trim() : null;
+
+  return { items, type: items[0].type, author };
+}
+
+// ══════════════════════════════════════════════════
+//  TIER 4: ddinstagram.com  (CDN mirror trick)
+//  ddinstagram.com mirrors Instagram posts, serving
+//  meta tags that point to real CDN media URLs.
+// ══════════════════════════════════════════════════
+async function fetchDDInstagram(url) {
+  const ddUrl = url
+    .replace('www.instagram.com', 'ddinstagram.com')
+    .replace(/^https?:\/\/instagram\.com/, 'https://ddinstagram.com');
+
+  const res = await proxiedFetch(ddUrl);
+  const html = await res.text();
+
+  const ogImg = html.match(/property="og:image"\s+content="([^"]+)"/i);
+  const ogVid = html.match(/property="og:video(?::url)?"\s+content="([^"]+)"/i);
+  const author = html.match(/"username":"([^"]+)"/i);
+
+  if (!ogImg && !ogVid) throw new Error('ddinstagram: no OG tags');
+
+  const mediaUrl = ogVid ? cleanUrl(ogVid[1]) : null;
+  const thumbUrl = ogImg ? cleanUrl(ogImg[1]) : null;
+  const type = mediaUrl ? 'video' : 'photo';
+
+  return { items: [{ mediaUrl, thumbUrl, type }], type, author: author ? author[1] : null };
+}
+
+// ══════════════════════════════════════════════════
+//  TIER 5: Instagram embed page scrape
+//  Instagram's /p/{sc}/embed/captioned/ page is
+//  publicly accessible and contains CDN URLs.
+// ══════════════════════════════════════════════════
 async function fetchEmbedPage(url) {
   const sc = extractShortcode(url);
-  if (!sc) throw new Error('No shortcode');
+  if (!sc) throw new Error('Embed: no shortcode');
+
   const embedUrl = `https://www.instagram.com/p/${sc}/embed/captioned/`;
-  const res = await fetch(PROXY + encodeURIComponent(embedUrl));
-  if (!res.ok) throw new Error('Embed failed');
+  const res = await proxiedFetch(embedUrl);
   const html = await res.text();
 
-  // Pull highest-res image
-  const imgs = [...html.matchAll(/https:\/\/[^"'\s]+\.(?:jpg|jpeg|webp)[^"'\s]*/g)].map(m => m[0]);
-  const vids = [...html.matchAll(/https:\/\/[^"'\s]+\.mp4[^"'\s]*/g)].map(m => m[0]);
+  const cdnImgs = [...html.matchAll(/https:\/\/[^"'\s\\]+(?:cdninstagram|fbcdn)[^"'\s\\]*\.(?:jpg|jpeg|webp)[^"'\s\\]*/g)].map(m => cleanUrl(m[0]));
+  const cdnVids = [...html.matchAll(/https:\/\/[^"'\s\\]+(?:cdninstagram|fbcdn)[^"'\s\\]*\.mp4[^"'\s\\]*/g)].map(m => cleanUrl(m[0]));
   const authorMatch = html.match(/"username":"([^"]+)"/);
 
-  const thumbUrl = imgs.find(i => i.includes('cdninstagram') || i.includes('fbcdn')) || imgs[0];
-  const mediaUrl = vids[0] ? decodeURIComponent(vids[0]).replace(/\\u0026/g,'&') : null;
+  const thumbUrl = cdnImgs.find(i => i.includes('cdninstagram') || i.includes('fbcdn')) || cdnImgs[0];
+  const mediaUrl = cdnVids[0] || null;
 
-  if (!thumbUrl && !mediaUrl) throw new Error('No media in embed');
+  if (!thumbUrl && !mediaUrl) throw new Error('Embed: no media');
 
-  return {
-    mediaUrl,
-    thumbUrl: thumbUrl ? decodeURIComponent(thumbUrl).replace(/\\u0026/g,'&') : null,
-    type: mediaUrl ? 'video' : 'photo',
-    author: authorMatch ? authorMatch[1] : null
-  };
+  const type = mediaUrl ? 'video' : 'photo';
+  return { items: [{ mediaUrl, thumbUrl: thumbUrl || null, type }], type, author: authorMatch ? authorMatch[1] : null };
 }
 
-// ── Tier 3: OG tags via allorigins ───────────────────────
-async function fetchOGTags(url) {
-  const res = await fetch(PROXY + encodeURIComponent(url));
-  if (!res.ok) throw new Error('OG fetch failed');
-  const html = await res.text();
-
-  const ogImg = html.match(/property="og:image"\s+content="([^"]+)"/i);
-  const ogVid = html.match(/property="og:video(?::url)?"\s+content="([^"]+)"/i);
-  const author = html.match(/"owner":\{"username":"([^"]+)"/i) || html.match(/"username":"([^"]+)"/i);
-
-  if (!ogImg && !ogVid) throw new Error('No OG tags');
-  return {
-    mediaUrl: ogVid ? ogVid[1] : null,
-    thumbUrl: ogImg ? ogImg[1] : null,
-    type: ogVid ? 'video' : 'photo',
-    author: author ? author[1] : null
-  };
-}
-
-// ── Tier 4: ddinstagram.com API ───────────────────────────
-async function fetchDDInstagram(url) {
-  const sc = extractShortcode(url);
-  if (!sc) throw new Error('No shortcode');
-  // ddinstagram replaces instagram.com with ddinstagram.com for direct media
-  const ddUrl = url.replace('www.instagram.com', 'ddinstagram.com').replace('instagram.com', 'ddinstagram.com');
-  const res = await fetch(PROXY + encodeURIComponent(ddUrl));
-  if (!res.ok) throw new Error('ddinstagram failed');
-  const html = await res.text();
-
-  const ogImg = html.match(/property="og:image"\s+content="([^"]+)"/i);
-  const ogVid = html.match(/property="og:video(?::url)?"\s+content="([^"]+)"/i);
-  if (!ogImg && !ogVid) throw new Error('No media from ddinstagram');
-
-  return {
-    mediaUrl: ogVid ? ogVid[1] : null,
-    thumbUrl: ogImg ? ogImg[1] : null,
-    type: ogVid ? 'video' : 'photo',
-    author: null
-  };
-}
-
-// ── Main ─────────────────────────────────────────────────
+// ══════════════════════════════════════════════════
+//  MAIN
+// ══════════════════════════════════════════════════
 async function handleFetch() {
   const input = document.getElementById('urlInput').value.trim();
   const btn   = document.getElementById('fetchBtn');
 
   if (!input) { document.getElementById('urlInput').focus(); return; }
   if (!/instagram\.com/.test(input)) {
-    showError('Invalid URL', 'Please enter a valid Instagram link.');
+    showError('Invalid URL', 'Please enter a valid Instagram link (instagram.com/p/… or /reel/…)');
     return;
   }
+
+  // Normalize the URL — strip query params that can confuse scrapers
+  let cleanInput = input.split('?')[0].replace(/\/$/, '') + '/';
 
   btn.disabled = true;
 
   const strategies = [
-    { label: 'Connecting…',             fn: () => fetchSaveIG(input) },
-    { label: 'Trying embed method…',    fn: () => fetchEmbedPage(input) },
-    { label: 'Reading page metadata…',  fn: () => fetchOGTags(input) },
-    { label: 'Final attempt…',          fn: () => fetchDDInstagram(input) },
+    { label: 'Connecting…',            sub: 'Strategy 1 of 5',  fn: () => fetchSaveIG(cleanInput) },
+    { label: 'Trying SnapInsta…',      sub: 'Strategy 2 of 5',  fn: () => fetchSnapInsta(cleanInput) },
+    { label: 'Trying Imginn mirror…',  sub: 'Strategy 3 of 5',  fn: () => fetchImginn(cleanInput) },
+    { label: 'Trying CDN mirror…',     sub: 'Strategy 4 of 5',  fn: () => fetchDDInstagram(cleanInput) },
+    { label: 'Final attempt…',         sub: 'Strategy 5 of 5',  fn: () => fetchEmbedPage(cleanInput) },
   ];
 
   for (const s of strategies) {
-    setLoading(s.label);
+    setLoading(s.label, s.sub);
     try {
       const result = await s.fn();
-      if (result && (result.thumbUrl || result.mediaUrl)) {
+      if (result && result.items && result.items.some(i => i.thumbUrl || i.mediaUrl)) {
         showResult(result);
         btn.disabled = false;
         return;
       }
-    } catch(e) {
-      console.warn('[Instadown]', s.label, e.message);
+    } catch (e) {
+      console.warn('[Instadown]', s.label, '→', e.message);
     }
   }
 
   btn.disabled = false;
-  showError('Media not found', 'This post may be private or Instagram is blocking requests. Only public posts can be downloaded.');
+  showError(
+    'Media not found',
+    'All 5 methods failed. This post may be private, deleted, or Instagram is actively blocking all proxies right now. Only public posts can be downloaded.'
+  );
 }
 
+// ── Enter key + DOMContentLoaded ─────────────────
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('urlInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') handleFetch();
