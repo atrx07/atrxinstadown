@@ -165,12 +165,18 @@ body {
 .meta-item { font-size: 0.82rem; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 6px; }
 
 /* ===== MULTI-ITEM ===== */
-.multi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
-.multi-thumb { position: relative; border-radius: 14px; overflow: hidden; box-shadow: var(--neu-shadow-sm); background: var(--bg); aspect-ratio: 1; cursor: pointer; }
+.multi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 14px; }
+.multi-item { display: flex; flex-direction: column; gap: 7px; }
+.multi-thumb { position: relative; border-radius: 14px; overflow: hidden; box-shadow: var(--neu-shadow-sm); background: var(--bg); aspect-ratio: 1; }
 .multi-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.multi-thumb .play-badge { position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.6); color: white; border-radius: 6px; padding: 2px 6px; font-size: 0.65rem; font-weight: 700; }
+.multi-thumb .play-badge { position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.6); color: white; border-radius: 6px; padding: 2px 6px; font-size: 0.65rem; font-weight: 700; pointer-events: none; }
+.item-dl-btn { width: 100%; padding: 7px 10px; font-size: 0.72rem; font-weight: 700; border-radius: 10px; border: none; cursor: pointer; background: var(--surface); box-shadow: var(--neu-shadow-sm); color: var(--accent); display: flex; align-items: center; justify-content: center; gap: 5px; transition: box-shadow 0.15s, transform 0.1s; }
+.item-dl-btn:hover { box-shadow: var(--neu-shadow); }
+.item-dl-btn:active { box-shadow: var(--neu-pressed); transform: scale(0.97); }
+.item-dl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .multi-dl-btn { width: 100%; margin-top: 8px; }
 .multi-section-title { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+.zip-progress { font-size: 0.78rem; color: var(--text-secondary); text-align: center; margin-top: 8px; display: none; font-weight: 600; }
 
 /* ===== ERROR ===== */
 .error-card { text-align: center; border: 1.5px solid rgba(252,129,129,0.2); }
@@ -287,7 +293,7 @@ body {
   .app-wrapper { max-width: 660px; padding: 30px 28px 64px; }
   .hero-title { font-size: 2.2rem; }
   .card { padding: 26px 24px; border-radius: 32px; }
-  .multi-grid { grid-template-columns: repeat(3,1fr); }
+  .multi-grid { grid-template-columns: repeat(3,1fr); gap: 12px; }
   .media-preview img, .media-preview video { max-height: 520px; }
   .creator-btn { padding: 13px 24px; font-size: 0.92rem; }
   .steps-grid { gap: 12px; }
@@ -311,7 +317,7 @@ body {
   .step-card { padding: 22px 16px; }
   .step-num { font-size: 1.6rem; }
   .step-text { font-size: 0.78rem; }
-  .multi-grid { grid-template-columns: repeat(4,1fr); gap: 12px; }
+  .multi-grid { grid-template-columns: repeat(3,1fr); gap: 14px; }
   .creator-section { margin-top: 32px; }
   .creator-card { padding: 30px 26px; }
   .creator-handle { font-size: 1.1rem; margin-bottom: 20px; }
@@ -334,6 +340,7 @@ body {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -536,7 +543,14 @@ function show(id) { document.getElementById(id).style.display = 'block'; }
 function hide(id) { document.getElementById(id).style.display = 'none'; }
 function pulse(el) { el.classList.remove('slide-in'); void el.offsetWidth; el.classList.add('slide-in'); }
 
-const DL_ICON = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+const DL_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+const ZIP_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+
+// ── Proxy helper — route media through /proxy to dodge CORS/referrer blocks ──
+function proxyUrl(url) {
+  if (!url) return url;
+  return '/proxy?url=' + encodeURIComponent(url);
+}
 
 // ── Result renderer ────────────────────────────────
 function showResult({ items, type, author }) {
@@ -562,46 +576,75 @@ function showResult({ items, type, author }) {
   if (isMulti) {
     const title = document.createElement('p');
     title.className = 'multi-section-title';
-    title.textContent = 'All items — tap to download';
+    title.textContent = `${items.length} items — download individually or all at once`;
     body.appendChild(title);
 
     const grid = document.createElement('div');
     grid.className = 'multi-grid';
+
     items.forEach((item, i) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'multi-item';
+
+      // Thumbnail
       const thumb = document.createElement('div');
       thumb.className = 'multi-thumb';
-      thumb.title = `Download item ${i + 1}`;
-      thumb.onclick = () => triggerDownload(item.mediaUrl || item.thumbUrl, item.type, i + 1);
       const img = document.createElement('img');
-      img.src = item.thumbUrl || item.mediaUrl;
+      img.src = proxyUrl(item.thumbUrl || item.mediaUrl);
       img.alt = `Item ${i + 1}`;
       img.loading = 'lazy';
       thumb.appendChild(img);
       if (item.type === 'video') {
         const badge = document.createElement('span');
-        badge.className = 'play-badge'; badge.textContent = '▶ Video';
+        badge.className = 'play-badge';
+        badge.textContent = '▶ Video';
         thumb.appendChild(badge);
       }
-      grid.appendChild(thumb);
+      wrapper.appendChild(thumb);
+
+      // Per-item download button
+      const btn = document.createElement('button');
+      btn.className = 'item-dl-btn';
+      btn.innerHTML = `${DL_ICON} ${item.type === 'video' ? 'Video' : 'Photo'} ${i + 1}`;
+      btn.onclick = async () => {
+        btn.disabled = true;
+        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Saving…`;
+        await triggerDownload(item.mediaUrl || item.thumbUrl, item.type, i + 1);
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Saved`;
+      };
+      wrapper.appendChild(btn);
+      grid.appendChild(wrapper);
     });
     body.appendChild(grid);
 
-    const dlAll = document.createElement('button');
-    dlAll.className = 'neu-btn download-btn multi-dl-btn';
-    dlAll.innerHTML = `${DL_ICON} Download All (${items.length})`;
-    dlAll.onclick = () => downloadAll(items);
-    body.appendChild(dlAll);
+    // Download All as ZIP button
+    const zipBtn = document.createElement('button');
+    zipBtn.className = 'neu-btn download-btn multi-dl-btn';
+    zipBtn.innerHTML = `${ZIP_ICON} Download All as ZIP`;
+    const zipProg = document.createElement('p');
+    zipProg.className = 'zip-progress';
+    zipBtn.onclick = () => downloadAllAsZip(items, zipBtn, zipProg);
+    body.appendChild(zipBtn);
+    body.appendChild(zipProg);
+
   } else {
+    // Single item
     const first = items[0];
+    const mediaUrl = first.mediaUrl || first.thumbUrl;
+    const thumbUrl = first.thumbUrl || first.mediaUrl;
+
     const preview = document.createElement('div');
     preview.className = 'media-preview';
-    if (first.type === 'video' && first.mediaUrl) {
+    if (first.type === 'video' && mediaUrl) {
       const v = document.createElement('video');
-      v.src = first.mediaUrl; v.controls = true; v.playsInline = true; v.preload = 'metadata';
+      v.src = proxyUrl(mediaUrl);
+      v.controls = true; v.playsInline = true; v.preload = 'metadata';
       preview.appendChild(v);
-    } else if (first.thumbUrl || first.mediaUrl) {
+    } else if (thumbUrl) {
       const img = document.createElement('img');
-      img.src = first.thumbUrl || first.mediaUrl; img.alt = 'Preview'; img.loading = 'lazy';
+      img.src = proxyUrl(thumbUrl);
+      img.alt = 'Preview'; img.loading = 'lazy';
       preview.appendChild(img);
     } else {
       preview.innerHTML = '<p class="media-placeholder">Preview unavailable.<br/>Click Download to save.</p>';
@@ -611,7 +654,7 @@ function showResult({ items, type, author }) {
     const dlBtn = document.createElement('button');
     dlBtn.className = 'neu-btn download-btn';
     dlBtn.innerHTML = `${DL_ICON} Download`;
-    dlBtn.onclick = () => triggerDownload(first.mediaUrl || first.thumbUrl, first.type);
+    dlBtn.onclick = () => triggerDownload(mediaUrl, first.type);
     body.appendChild(dlBtn);
   }
 }
@@ -621,23 +664,76 @@ async function triggerDownload(url, type, idx) {
   if (!url) return;
   const ext = type === 'video' ? 'mp4' : 'jpg';
   const filename = `instadown_${Date.now()}${idx ? '_' + idx : ''}.${ext}`;
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(30000) });
-    if (res.ok) {
-      const blob = await res.blob();
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob); a.download = filename; a.click();
-      URL.revokeObjectURL(a.href); return;
-    }
-  } catch {}
+  // Try fetching via proxy first (bypasses CORS / Instagram referrer blocks)
+  const urls = [proxyUrl(url), url];
+  for (const src of urls) {
+    try {
+      const res = await fetch(src, { signal: AbortSignal.timeout(30000) });
+      if (res.ok) {
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+        return;
+      }
+    } catch {}
+  }
+  // Last resort — open in new tab
   window.open(url, '_blank');
 }
 
-async function downloadAll(items) {
+async function downloadAllAsZip(items, btn, prog) {
+  btn.disabled = true;
+  prog.style.display = 'block';
+
+  const zip = new JSZip();
+  let done = 0;
+
   for (let i = 0; i < items.length; i++) {
-    await triggerDownload(items[i].mediaUrl || items[i].thumbUrl, items[i].type, i + 1);
-    if (i < items.length - 1) await new Promise(r => setTimeout(r, 600));
+    const item = items[i];
+    const url = item.mediaUrl || item.thumbUrl;
+    const ext = item.type === 'video' ? 'mp4' : 'jpg';
+    const filename = `instadown_${String(i + 1).padStart(2, '0')}.${ext}`;
+    prog.textContent = `Fetching ${i + 1} of ${items.length}…`;
+
+    const urls = [proxyUrl(url), url];
+    let fetched = false;
+    for (const src of urls) {
+      try {
+        const res = await fetch(src, { signal: AbortSignal.timeout(30000) });
+        if (res.ok) {
+          const blob = await res.blob();
+          zip.file(filename, blob);
+          fetched = true;
+          break;
+        }
+      } catch {}
+    }
+    if (!fetched) prog.textContent = `⚠️ Couldn't fetch item ${i + 1}, skipping…`;
+    done++;
   }
+
+  prog.textContent = 'Creating ZIP…';
+  try {
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(zipBlob);
+    a.download = `instadown_carousel_${Date.now()}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    prog.textContent = `✅ ZIP downloaded (${done} files)`;
+  } catch (e) {
+    prog.textContent = '❌ Failed to create ZIP.';
+  }
+
+  btn.disabled = false;
+  setTimeout(() => { prog.style.display = 'none'; }, 4000);
 }
 
 // ══════════════════════════════════════════════════
