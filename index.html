@@ -41,7 +41,7 @@
   --neu-pressed: inset 3px 3px 8px var(--shadow-dark), inset -3px -3px 8px var(--shadow-light);
 }
 
-html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 
 body {
   font-family: 'Nunito', sans-serif;
@@ -57,58 +57,68 @@ body {
 .blob-1 { width: 400px; height: 400px; background: radial-gradient(circle,#c3d0e8,#dde3ee); top:-120px; right:-100px; }
 .blob-2 { width: 350px; height: 350px; background: radial-gradient(circle,#d4c5f9,#e0ddf5); bottom:80px; left:-100px; }
 
-/* ===== LAYOUT ===== */
-.app-wrapper { position: relative; z-index: 1; max-width: 540px; margin: 0 auto; padding: 24px 20px 48px; }
+/* ===== LAYOUT — mobile-first, expands on larger screens ===== */
+.app-wrapper {
+  position: relative; z-index: 1;
+  width: 100%; margin: 0 auto;
+  max-width: 540px;
+  padding: 22px 18px 56px;
+}
 
 /* ===== HEADER ===== */
-.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; padding-top: 8px; }
-.logo { display: flex; align-items: center; gap: 10px; }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; padding-top: 6px; gap: 12px; }
+.logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .logo-icon {
   width: 42px; height: 42px; border-radius: 12px;
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   display: flex; align-items: center; justify-content: center; color: white;
   box-shadow: 4px 4px 10px rgba(102,126,234,0.35), -2px -2px 8px rgba(255,255,255,0.7);
+  flex-shrink: 0;
 }
 .logo-text-wrap { display: flex; flex-direction: column; line-height: 1; }
-.logo-text { font-size: 1.35rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em; }
-.logo-sub { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; margin-top: 2px; }
+.logo-text { font-size: 1.3rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em; }
+.logo-sub { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; margin-top: 2px; }
 .header-badge {
-  font-size: 0.72rem; font-weight: 700; color: var(--accent);
-  background: var(--accent-soft); padding: 6px 12px; border-radius: 100px;
+  font-size: 0.7rem; font-weight: 700; color: var(--accent);
+  background: var(--accent-soft); padding: 5px 11px; border-radius: 100px;
   letter-spacing: 0.04em; text-transform: uppercase; box-shadow: var(--neu-shadow-sm);
+  white-space: nowrap;
 }
 
 /* ===== HERO ===== */
-.hero { text-align: center; margin-bottom: 32px; animation: fadeUp 0.6s ease both; }
-.hero-title { font-size: clamp(1.75rem,6vw,2.25rem); font-weight: 800; line-height: 1.2; letter-spacing: -0.03em; margin-bottom: 12px; }
+.hero { text-align: center; margin-bottom: 28px; animation: fadeUp 0.6s ease both; }
+.hero-title { font-size: clamp(1.55rem, 5.5vw, 2.25rem); font-weight: 800; line-height: 1.2; letter-spacing: -0.03em; margin-bottom: 10px; }
 .gradient-text { background: linear-gradient(135deg,var(--accent),var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.hero-sub { font-size: 0.95rem; color: var(--text-secondary); font-weight: 500; }
+.hero-sub { font-size: clamp(0.82rem, 2.5vw, 0.95rem); color: var(--text-secondary); font-weight: 500; }
 
 /* ===== CARDS ===== */
-.card { background: var(--surface); border-radius: 32px; box-shadow: var(--neu-shadow-lg); padding: 28px 24px; margin-bottom: 20px; animation: fadeUp 0.5s ease both; }
+.card { background: var(--surface); border-radius: 28px; box-shadow: var(--neu-shadow-lg); padding: 22px 20px; margin-bottom: 18px; animation: fadeUp 0.5s ease both; }
 
 /* ===== INPUT ===== */
-.input-label { display: flex; align-items: center; gap: 7px; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
-.input-row { display: flex; gap: 12px; align-items: center; margin-bottom: 18px; }
+.input-label { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+.input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
 .neu-input {
   flex: 1; background: var(--bg); border: none; outline: none;
-  border-radius: 18px; padding: 14px 18px;
-  font-family: 'Nunito', sans-serif; font-size: 0.9rem; font-weight: 500; color: var(--text-primary);
+  border-radius: 16px; padding: 13px 16px;
+  font-family: 'Nunito', sans-serif; font-size: 0.88rem; font-weight: 500; color: var(--text-primary);
   box-shadow: var(--neu-inset); transition: box-shadow 0.2s ease; min-width: 0;
+  -webkit-appearance: none;
 }
 .neu-input::placeholder { color: var(--text-muted); font-weight: 400; }
 .neu-input:focus { box-shadow: var(--neu-inset), 0 0 0 2px rgba(102,126,234,0.25); }
 
 /* ===== BUTTONS ===== */
 .neu-btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
   font-family: 'Nunito', sans-serif; font-weight: 700; cursor: pointer; border: none;
-  border-radius: 18px; transition: all 0.15s ease; touch-action: manipulation; user-select: none;
+  border-radius: 16px; transition: all 0.15s ease; touch-action: manipulation;
+  user-select: none; -webkit-tap-highlight-color: transparent;
 }
 .primary-btn {
   background: linear-gradient(135deg,var(--accent),var(--accent-2)); color: white;
-  padding: 14px 20px; font-size: 0.9rem; white-space: nowrap; min-width: 100px;
+  padding: 13px 18px; font-size: 0.88rem; white-space: nowrap;
   box-shadow: 4px 4px 12px rgba(102,126,234,0.4), -2px -2px 8px rgba(255,255,255,0.6);
+  min-height: 48px;
 }
 .primary-btn:hover { box-shadow: 6px 6px 16px rgba(102,126,234,0.5),-2px -2px 10px rgba(255,255,255,0.7); transform: translateY(-1px); }
 .primary-btn:active { box-shadow: 2px 2px 6px rgba(102,126,234,0.35); transform: translateY(1px); }
@@ -116,14 +126,15 @@ body {
 
 .download-btn {
   background: linear-gradient(135deg,var(--success),#38a169); color: white;
-  padding: 14px 28px; font-size: 0.95rem; width: 100%;
+  padding: 14px 24px; font-size: 0.92rem; width: 100%;
   box-shadow: 4px 4px 12px rgba(72,187,120,0.4),-2px -2px 8px rgba(255,255,255,0.6);
+  min-height: 50px;
 }
 .download-btn:hover { box-shadow: 6px 6px 16px rgba(72,187,120,0.5),-2px -2px 10px rgba(255,255,255,0.7); transform: translateY(-1px); }
 .download-btn:active { box-shadow: 2px 2px 6px rgba(72,187,120,0.35); transform: translateY(1px); }
 .download-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
 
-.ghost-btn { background: var(--bg); color: var(--accent); padding: 12px 24px; font-size: 0.9rem; box-shadow: var(--neu-shadow-sm); margin-top: 4px; }
+.ghost-btn { background: var(--bg); color: var(--accent); padding: 11px 22px; font-size: 0.88rem; box-shadow: var(--neu-shadow-sm); margin-top: 4px; }
 .ghost-btn:hover { transform: translateY(-1px); }
 .ghost-btn:active { box-shadow: var(--neu-pressed); transform: translateY(0); }
 
@@ -132,29 +143,29 @@ body {
 .icon-btn:active { box-shadow: var(--neu-pressed); }
 
 /* ===== CHIPS ===== */
-.type-chips { display: flex; gap: 8px; flex-wrap: wrap; }
-.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); background: var(--bg); padding: 6px 12px; border-radius: 100px; box-shadow: var(--neu-shadow-sm); }
+.type-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 0.7rem; font-weight: 600; color: var(--text-secondary); background: var(--bg); padding: 5px 10px; border-radius: 100px; box-shadow: var(--neu-shadow-sm); white-space: nowrap; }
 
 /* ===== LOADING ===== */
 .loading-card { text-align: center; }
-.loader-wrap { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.loader-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .neu-spinner { width: 52px; height: 52px; border-radius: 50%; background: var(--bg); box-shadow: var(--neu-shadow); position: relative; }
 .neu-spinner::after { content:''; position:absolute; inset:8px; border-radius:50%; border:3px solid transparent; border-top-color:var(--accent); border-right-color:var(--accent-2); animation:spin 0.9s linear infinite; }
 .loading-text { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; }
-.loading-sub { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; margin-top: -8px; }
+.loading-sub { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; margin-top: -6px; }
 
 /* ===== RESULT ===== */
-.result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .result-badge { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); background: var(--accent-soft); padding: 5px 12px; border-radius: 100px; box-shadow: var(--neu-shadow-sm); }
-.media-preview { width: 100%; border-radius: 20px; overflow: hidden; box-shadow: var(--neu-shadow); margin-bottom: 18px; background: var(--bg); min-height: 80px; display: flex; align-items: center; justify-content: center; }
-.media-preview img { width: 100%; height: auto; display: block; max-height: 420px; object-fit: cover; }
-.media-preview video { width: 100%; max-height: 420px; display: block; }
-.media-placeholder { padding: 32px; color: var(--text-muted); font-size: 0.85rem; text-align: center; }
-.meta-row { margin-bottom: 16px; }
+.media-preview { width: 100%; border-radius: 18px; overflow: hidden; box-shadow: var(--neu-shadow); margin-bottom: 16px; background: var(--bg); min-height: 80px; display: flex; align-items: center; justify-content: center; }
+.media-preview img { width: 100%; height: auto; display: block; max-height: 460px; object-fit: cover; }
+.media-preview video { width: 100%; max-height: 460px; display: block; }
+.media-placeholder { padding: 28px; color: var(--text-muted); font-size: 0.85rem; text-align: center; }
+.meta-row { margin-bottom: 14px; }
 .meta-item { font-size: 0.82rem; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 6px; }
 
 /* ===== MULTI-ITEM ===== */
-.multi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+.multi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
 .multi-thumb { position: relative; border-radius: 14px; overflow: hidden; box-shadow: var(--neu-shadow-sm); background: var(--bg); aspect-ratio: 1; cursor: pointer; }
 .multi-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .multi-thumb .play-badge { position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.6); color: white; border-radius: 6px; padding: 2px 6px; font-size: 0.65rem; font-weight: 700; }
@@ -163,37 +174,162 @@ body {
 
 /* ===== ERROR ===== */
 .error-card { text-align: center; border: 1.5px solid rgba(252,129,129,0.2); }
-.error-icon { width: 60px; height: 60px; border-radius: 50%; background: var(--bg); box-shadow: var(--neu-shadow); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: var(--error); }
-.error-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
-.error-msg { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5; }
+.error-icon { width: 58px; height: 58px; border-radius: 50%; background: var(--bg); box-shadow: var(--neu-shadow); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; color: var(--error); }
+.error-title { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+.error-msg { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 18px; line-height: 1.5; }
 
 /* ===== HOW IT WORKS ===== */
-.how-section { margin-top: 12px; animation: fadeUp 0.6s ease 0.3s both; }
-.section-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 16px; padding-left: 4px; }
-.steps-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
-.step-card { background: var(--surface); border-radius: 24px; box-shadow: var(--neu-shadow-sm); padding: 20px 14px; text-align: center; }
-.step-num { font-size: 1.5rem; font-weight: 800; background: linear-gradient(135deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom: 10px; line-height:1; }
-.step-text { font-size: 0.775rem; color: var(--text-secondary); font-weight: 600; line-height: 1.45; }
+.how-section { margin-top: 10px; animation: fadeUp 0.6s ease 0.3s both; }
+.section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 14px; padding-left: 4px; }
+.steps-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.step-card { background: var(--surface); border-radius: 22px; box-shadow: var(--neu-shadow-sm); padding: 18px 12px; text-align: center; }
+.step-num { font-size: 1.45rem; font-weight: 800; background: linear-gradient(135deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom: 8px; line-height:1; }
+.step-text { font-size: 0.73rem; color: var(--text-secondary); font-weight: 600; line-height: 1.45; }
+
+/* ===== CREATOR SECTION ===== */
+.creator-section { margin-top: 24px; animation: fadeUp 0.6s ease 0.35s both; }
+.creator-card {
+  background: var(--surface);
+  border-radius: 28px;
+  box-shadow: var(--neu-shadow-lg);
+  padding: 22px 20px;
+  text-align: center;
+}
+.creator-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.creator-handle {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+.creator-handle span {
+  background: linear-gradient(135deg,var(--accent),var(--accent-2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.creator-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.creator-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 100px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.creator-btn-ig {
+  background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  color: white;
+  box-shadow: 4px 4px 12px rgba(220,39,67,0.3), -2px -2px 8px rgba(255,255,255,0.6);
+}
+.creator-btn-ig:hover { transform: translateY(-2px); box-shadow: 5px 5px 18px rgba(220,39,67,0.42), -2px -2px 10px rgba(255,255,255,0.7); }
+.creator-btn-ig:active { transform: translateY(1px); }
+
+.creator-btn-gh {
+  background: var(--bg);
+  color: var(--text-primary);
+  box-shadow: var(--neu-shadow-sm);
+}
+.creator-btn-gh:hover { transform: translateY(-2px); box-shadow: var(--neu-shadow); }
+.creator-btn-gh:active { box-shadow: var(--neu-pressed); transform: translateY(0); }
+.creator-btn svg { flex-shrink: 0; }
 
 /* ===== FOOTER ===== */
-.footer { text-align: center; margin-top: 36px; animation: fadeUp 0.6s ease 0.4s both; }
-.footer p { font-size: 0.78rem; color: var(--text-muted); font-weight: 500; }
-.footer-note { margin-top: 4px; font-size: 0.72rem !important; opacity: 0.7; }
+.footer { text-align: center; margin-top: 24px; animation: fadeUp 0.6s ease 0.4s both; }
+.footer p { font-size: 0.76rem; color: var(--text-muted); font-weight: 500; }
+.footer-note { margin-top: 4px; font-size: 0.7rem !important; opacity: 0.7; }
 
 /* ===== ANIMATIONS ===== */
-@keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
 @keyframes spin { to { transform:rotate(360deg); } }
 @keyframes slideIn { from { opacity:0; transform:translateY(12px) scale(0.98); } to { opacity:1; transform:translateY(0) scale(1); } }
 .slide-in { animation: slideIn 0.3s ease both; }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 400px) {
-  .app-wrapper { padding: 20px 16px 40px; }
-  .steps-grid { grid-template-columns: 1fr; }
+/* =====================================================
+   RESPONSIVE BREAKPOINTS
+===================================================== */
+
+/* Tiny phones ≤360px */
+@media (max-width: 360px) {
+  .app-wrapper { padding: 16px 14px 48px; }
+  .hero-title { font-size: 1.4rem; }
+  .card { padding: 18px 15px; border-radius: 22px; }
   .input-row { flex-direction: column; }
   .primary-btn { width: 100%; }
-  .multi-grid { grid-template-columns: repeat(2, 1fr); }
+  .steps-grid { grid-template-columns: 1fr; }
+  .creator-btns { flex-direction: column; align-items: stretch; }
+  .creator-btn { justify-content: center; }
+  .type-chips { gap: 5px; }
 }
+
+/* Tablet: 560px – 767px */
+@media (min-width: 560px) {
+  .app-wrapper { max-width: 660px; padding: 30px 28px 64px; }
+  .hero-title { font-size: 2.2rem; }
+  .card { padding: 26px 24px; border-radius: 32px; }
+  .multi-grid { grid-template-columns: repeat(3,1fr); }
+  .media-preview img, .media-preview video { max-height: 520px; }
+  .creator-btn { padding: 13px 24px; font-size: 0.92rem; }
+  .steps-grid { gap: 12px; }
+  .step-card { padding: 20px 14px; }
+}
+
+/* Desktop: 768px+ */
+@media (min-width: 768px) {
+  .app-wrapper { max-width: 820px; padding: 44px 48px 80px; }
+  .header { margin-bottom: 44px; padding-top: 8px; }
+  .logo-icon { width: 48px; height: 48px; border-radius: 14px; }
+  .logo-text { font-size: 1.5rem; }
+  .hero { margin-bottom: 36px; }
+  .hero-title { font-size: 2.65rem; }
+  .hero-sub { font-size: 1rem; }
+  .card { padding: 30px 28px; border-radius: 34px; margin-bottom: 22px; }
+  .neu-input { font-size: 0.95rem; padding: 15px 18px; }
+  .primary-btn { padding: 15px 24px; font-size: 0.95rem; }
+  .download-btn { padding: 15px 28px; font-size: 0.95rem; }
+  .steps-grid { gap: 14px; }
+  .step-card { padding: 22px 16px; }
+  .step-num { font-size: 1.6rem; }
+  .step-text { font-size: 0.78rem; }
+  .multi-grid { grid-template-columns: repeat(4,1fr); gap: 12px; }
+  .creator-section { margin-top: 32px; }
+  .creator-card { padding: 30px 26px; }
+  .creator-handle { font-size: 1.1rem; margin-bottom: 20px; }
+  .creator-btn { padding: 14px 28px; font-size: 0.95rem; }
+  .creator-btns { gap: 14px; }
+  .media-preview img, .media-preview video { max-height: 560px; }
+}
+
+/* Wide desktop: 1100px+ */
+@media (min-width: 1100px) {
+  .app-wrapper { max-width: 960px; padding: 52px 56px 96px; }
+  .hero-title { font-size: 3rem; }
+  .hero-sub { font-size: 1.05rem; }
+  .card { padding: 34px 32px; }
+  .creator-card { padding: 34px 32px; }
+}
+
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
@@ -225,69 +361,50 @@ body {
 
     <section class="hero">
       <h1 class="hero-title">Download <span class="gradient-text">Instagram</span><br/>Content Instantly</h1>
-      <p class="hero-sub">Posts · Reels · Videos — no login, no watermark</p>
+      <p class="hero-sub">Posts &middot; Reels &middot; Videos &mdash; no login, no watermark</p>
     </section>
 
     <div class="card input-card">
       <label class="input-label" for="urlInput">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
           <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
         </svg>
         Paste Instagram URL
       </label>
       <div class="input-row">
-        <input type="url" id="urlInput" class="neu-input" placeholder="https://www.instagram.com/p/..." autocomplete="off" spellcheck="false" />
+        <input type="url" id="urlInput" class="neu-input" placeholder="https://www.instagram.com/p/..." autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" inputmode="url" />
         <button class="neu-btn primary-btn" id="fetchBtn" onclick="handleFetch()">
           <span>Fetch</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
           </svg>
         </button>
       </div>
       <div class="type-chips">
         <span class="chip">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none"/><polyline points="21 15 16 10 5 21"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none"/><polyline points="21 15 16 10 5 21"/></svg>
           Photos
         </span>
         <span class="chip">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           Reels
         </span>
         <span class="chip">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
           Videos
         </span>
         <span class="chip">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           Carousels
         </span>
       </div>
     </div>
 
-    <!-- ── Apify Token Card ── -->
-    <div class="card" id="tokenCard" style="display:none;">
-      <label class="input-label" for="tokenInput">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        Apify API Token
-      </label>
-      <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:14px;line-height:1.5;">
-        Enter your <a href="https://console.apify.com/account/integrations" target="_blank" style="color:var(--accent);font-weight:700;">Apify API token</a> to use the <strong>instagram-scraper</strong> actor. Free tier included. Saved locally on your device.
-      </p>
-      <div class="input-row">
-        <input type="password" id="tokenInput" class="neu-input" placeholder="apify_api_xxxxxxxxxxxx" autocomplete="off" spellcheck="false" />
-        <button class="neu-btn primary-btn" onclick="submitToken()">
-          <span>Save</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </button>
-      </div>
-      <button class="neu-btn ghost-btn" onclick="resetUI()" style="font-size:0.8rem;padding:10px 16px;">Cancel</button>
-    </div>
-
     <div class="card loading-card" id="loadingCard" style="display:none;">
       <div class="loader-wrap">
         <div class="neu-spinner"></div>
-        <p class="loading-text" id="loadingText">Fetching media…</p>
+        <p class="loading-text" id="loadingText">Fetching media&hellip;</p>
         <p class="loading-sub" id="loadingSub"></p>
       </div>
     </div>
@@ -296,7 +413,7 @@ body {
       <div class="result-header">
         <div class="result-badge" id="resultBadge">Photo</div>
         <button class="icon-btn" onclick="resetUI()" aria-label="Clear result">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
@@ -306,13 +423,13 @@ body {
 
     <div class="card error-card" id="errorCard" style="display:none;">
       <div class="error-icon">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/>
           <line x1="12" y1="8" x2="12" y2="12"/>
           <line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
       </div>
-      <p class="error-title" id="errorTitle">Couldn't fetch media</p>
+      <p class="error-title" id="errorTitle">Couldn&rsquo;t fetch media</p>
       <p class="error-msg" id="errorMsg">Make sure the post is public and the URL is correct.</p>
       <button class="neu-btn ghost-btn" onclick="resetUI()">Try Again</button>
     </div>
@@ -326,75 +443,106 @@ body {
       </div>
     </section>
 
+    <!-- ── Creator Contact ── -->
+    <section class="creator-section">
+      <div class="creator-card">
+        <p class="creator-label">Made by</p>
+        <p class="creator-handle"><span>atrx07</span></p>
+        <div class="creator-btns">
+
+          <a href="https://www.instagram.com/atrx07" target="_blank" rel="noopener noreferrer"
+             class="creator-btn creator-btn-ig" aria-label="Instagram @atrx07">
+            <!-- Instagram icon -->
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+              <circle cx="12" cy="12" r="4"/>
+              <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+            </svg>
+            Instagram
+          </a>
+
+          <a href="https://github.com/atrx07" target="_blank" rel="noopener noreferrer"
+             class="creator-btn creator-btn-gh" aria-label="GitHub @atrx07">
+            <!-- GitHub icon -->
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+            </svg>
+            GitHub
+          </a>
+
+        </div>
+      </div>
+    </section>
+
     <footer class="footer">
-      <p>Instadown by <strong>ATRX</strong> &copy; 2025 · Personal use only</p>
-      <p class="footer-note">We don't store your URLs or media</p>
+      <p>Instadown by <strong>ATRX</strong> &copy; 2026 &middot; Personal use only</p>
+      <p class="footer-note">We don&rsquo;t store your URLs or media</p>
     </footer>
 
   </div>
 
 <script>
 // ══════════════════════════════════════════════════
-//  INSTADOWN · ATRX — Powered by Apify instagram-scraper
-//  Actor: apify/instagram-scraper
-//  Docs:  https://apify.com/apify/instagram-scraper
+//  INSTADOWN · ATRX
+//  Actor: apify~instagram-scraper
+//  Speed: uses run-sync-get-dataset-items endpoint
+//         (single HTTP call, no polling loop)
+//  Token: injected by Cloudflare Pages build step
+//         Set APIFY_TOKEN in CF Pages > Settings > Env vars
+//         Build command: sed -i "s/__CF_APIFY_TOKEN__/$APIFY_TOKEN/g" index.html
 // ══════════════════════════════════════════════════
 
 const APIFY_ACTOR_ID = 'apify~instagram-scraper';
 const APIFY_BASE     = 'https://api.apify.com/v2';
 
-// ── API Token management ──────────────────────────
-
-function getToken() {
-  return localStorage.getItem('apify_token') || '';
+// ── Token resolver ────────────────────────────────
+// Fetches token securely from Cloudflare Pages Function (/functions/token.js)
+// Set APIFY_TOKEN in your Cloudflare Pages environment variables — no build command needed.
+async function getToken() {
+  try {
+    const res = await fetch('/token');
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.token || null;
+  } catch {
+    return null;
+  }
 }
 
-function saveToken(token) {
-  if (token) localStorage.setItem('apify_token', token.trim());
-  else localStorage.removeItem('apify_token');
-}
-
-// ── UI Helpers ────────────────────────────────────
-
-function setLoading(msg, sub = '') {
-  document.getElementById('resultCard').style.display  = 'none';
-  document.getElementById('errorCard').style.display   = 'none';
-  document.getElementById('tokenCard').style.display   = 'none';
-  document.getElementById('loadingCard').style.display = 'block';
-  document.getElementById('loadingText').textContent   = msg || 'Fetching media…';
-  document.getElementById('loadingSub').textContent    = sub;
-}
-
-function showTokenPrompt() {
-  ['resultCard','errorCard','loadingCard'].forEach(id =>
-    document.getElementById(id).style.display = 'none'
-  );
-  const tc = document.getElementById('tokenCard');
-  tc.style.display = 'block';
-  tc.classList.remove('slide-in'); void tc.offsetWidth; tc.classList.add('slide-in');
-  document.getElementById('tokenInput').focus();
+// ── UI helpers ────────────────────────────────────
+function setLoading(msg, sub) {
+  hide('resultCard'); hide('errorCard');
+  show('loadingCard');
+  document.getElementById('loadingText').textContent = msg || 'Fetching media…';
+  document.getElementById('loadingSub').textContent  = sub || '';
 }
 
 function showError(title, msg) {
-  document.getElementById('loadingCard').style.display = 'none';
-  document.getElementById('resultCard').style.display  = 'none';
-  document.getElementById('tokenCard').style.display   = 'none';
+  hide('loadingCard'); hide('resultCard');
   const ec = document.getElementById('errorCard');
   ec.style.display = 'block';
-  ec.classList.remove('slide-in'); void ec.offsetWidth; ec.classList.add('slide-in');
+  pulse(ec);
   document.getElementById('errorTitle').textContent = title;
   document.getElementById('errorMsg').textContent   = msg;
 }
 
-const DL_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+function resetUI() {
+  ['resultCard','errorCard','loadingCard'].forEach(hide);
+  document.getElementById('urlInput').value = '';
+  document.getElementById('urlInput').focus();
+}
 
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+function pulse(el) { el.classList.remove('slide-in'); void el.offsetWidth; el.classList.add('slide-in'); }
+
+const DL_ICON = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+
+// ── Result renderer ────────────────────────────────
 function showResult({ items, type, author }) {
-  document.getElementById('loadingCard').style.display = 'none';
-  document.getElementById('errorCard').style.display   = 'none';
-  document.getElementById('tokenCard').style.display   = 'none';
+  hide('loadingCard'); hide('errorCard');
   const rc = document.getElementById('resultCard');
-  rc.style.display = 'block';
-  rc.classList.remove('slide-in'); void rc.offsetWidth; rc.classList.add('slide-in');
+  rc.style.display = 'block'; pulse(rc);
 
   const isMulti = items.length > 1;
   document.getElementById('resultBadge').textContent =
@@ -407,10 +555,7 @@ function showResult({ items, type, author }) {
   if (author) {
     const meta = document.createElement('div');
     meta.className = 'meta-row';
-    meta.innerHTML = `<div class="meta-item">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      @${author}
-    </div>`;
+    meta.innerHTML = `<div class="meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>@${author}</div>`;
     body.appendChild(meta);
   }
 
@@ -422,23 +567,19 @@ function showResult({ items, type, author }) {
 
     const grid = document.createElement('div');
     grid.className = 'multi-grid';
-
     items.forEach((item, i) => {
       const thumb = document.createElement('div');
       thumb.className = 'multi-thumb';
       thumb.title = `Download item ${i + 1}`;
       thumb.onclick = () => triggerDownload(item.mediaUrl || item.thumbUrl, item.type, i + 1);
-
       const img = document.createElement('img');
       img.src = item.thumbUrl || item.mediaUrl;
       img.alt = `Item ${i + 1}`;
       img.loading = 'lazy';
       thumb.appendChild(img);
-
       if (item.type === 'video') {
         const badge = document.createElement('span');
-        badge.className = 'play-badge';
-        badge.textContent = '▶ Video';
+        badge.className = 'play-badge'; badge.textContent = '▶ Video';
         thumb.appendChild(badge);
       }
       grid.appendChild(thumb);
@@ -450,20 +591,17 @@ function showResult({ items, type, author }) {
     dlAll.innerHTML = `${DL_ICON} Download All (${items.length})`;
     dlAll.onclick = () => downloadAll(items);
     body.appendChild(dlAll);
-
   } else {
     const first = items[0];
     const preview = document.createElement('div');
     preview.className = 'media-preview';
-
     if (first.type === 'video' && first.mediaUrl) {
       const v = document.createElement('video');
       v.src = first.mediaUrl; v.controls = true; v.playsInline = true; v.preload = 'metadata';
       preview.appendChild(v);
     } else if (first.thumbUrl || first.mediaUrl) {
       const img = document.createElement('img');
-      img.src = first.thumbUrl || first.mediaUrl;
-      img.alt = 'Preview'; img.loading = 'lazy';
+      img.src = first.thumbUrl || first.mediaUrl; img.alt = 'Preview'; img.loading = 'lazy';
       preview.appendChild(img);
     } else {
       preview.innerHTML = '<p class="media-placeholder">Preview unavailable.<br/>Click Download to save.</p>';
@@ -478,7 +616,8 @@ function showResult({ items, type, author }) {
   }
 }
 
-async function triggerDownload(url, type, idx = '') {
+// ── Download helpers ─────────────────────────────
+async function triggerDownload(url, type, idx) {
   if (!url) return;
   const ext = type === 'video' ? 'mp4' : 'jpg';
   const filename = `instadown_${Date.now()}${idx ? '_' + idx : ''}.${ext}`;
@@ -487,13 +626,10 @@ async function triggerDownload(url, type, idx = '') {
     if (res.ok) {
       const blob = await res.blob();
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(a.href);
-      return;
+      a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+      URL.revokeObjectURL(a.href); return;
     }
-  } catch { /* fall through */ }
+  } catch {}
   window.open(url, '_blank');
 }
 
@@ -504,181 +640,116 @@ async function downloadAll(items) {
   }
 }
 
-function resetUI() {
-  ['resultCard','errorCard','loadingCard','tokenCard'].forEach(id =>
-    document.getElementById(id).style.display = 'none'
-  );
-  document.getElementById('urlInput').value = '';
-  document.getElementById('urlInput').focus();
-}
-
-// ── Token card submit ─────────────────────────────
-
-function submitToken() {
-  const val = document.getElementById('tokenInput').value.trim();
-  if (!val) { document.getElementById('tokenInput').focus(); return; }
-  saveToken(val);
-  document.getElementById('tokenCard').style.display = 'none';
-  handleFetch();
-}
-
-// ── Apify actor run + poll + parse ───────────────
+// ══════════════════════════════════════════════════
+//  APIFY — Fast single-request sync endpoint
+//  Endpoint: /acts/:id/run-sync-get-dataset-items
+//  This replaces the old 30-poll loop.
+//  Apify runs the actor server-side and streams the
+//  dataset items back when done. Typical: 5–20s.
+// ══════════════════════════════════════════════════
 
 async function runApifyActor(postUrl, token) {
-  // 1. Start the actor run
-  const runRes = await fetch(`${APIFY_BASE}/acts/${APIFY_ACTOR_ID}/runs?token=${token}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      directUrls: [postUrl],
-      resultsType: 'posts',
-      resultsLimit: 1,
-      addParentData: false,
-    }),
-    signal: AbortSignal.timeout(15000),
-  });
+  setLoading('Scraping Instagram…', 'Usually 5–15 seconds');
 
-  if (runRes.status === 401) throw Object.assign(new Error('Invalid Apify token'), { code: 'AUTH' });
-  if (!runRes.ok) throw new Error(`Apify run failed: ${runRes.status}`);
-
-  const runData = await runRes.json();
-  const runId   = runData.data?.id;
-  const dsId    = runData.data?.defaultDatasetId;
-  if (!runId || !dsId) throw new Error('Apify: missing run/dataset id');
-
-  // 2. Poll until SUCCEEDED (max ~90 s, check every 3 s)
-  const MAX_POLLS = 30;
-  for (let i = 0; i < MAX_POLLS; i++) {
-    await new Promise(r => setTimeout(r, 3000));
-    setLoading('Scraping with Apify…', `Checking run status (${i + 1}/${MAX_POLLS})`);
-
-    const statusRes = await fetch(`${APIFY_BASE}/actor-runs/${runId}?token=${token}`, {
-      signal: AbortSignal.timeout(10000),
-    });
-    if (!statusRes.ok) continue;
-
-    const statusData = await statusRes.json();
-    const status = statusData.data?.status;
-
-    if (status === 'FAILED' || status === 'ABORTED' || status === 'TIMED-OUT')
-      throw new Error(`Apify run ${status}`);
-
-    if (status === 'SUCCEEDED') break;
-    // else RUNNING / READY — keep polling
-  }
-
-  // 3. Fetch dataset items
-  setLoading('Downloading results…', 'Almost there');
-  const dsRes = await fetch(
-    `${APIFY_BASE}/datasets/${dsId}/items?token=${token}&format=json&clean=true`,
-    { signal: AbortSignal.timeout(15000) }
+  const res = await fetch(
+    `${APIFY_BASE}/acts/${APIFY_ACTOR_ID}/run-sync-get-dataset-items` +
+    `?token=${token}&format=json&clean=true`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        directUrls: [postUrl],
+        resultsType: 'posts',
+        resultsLimit: 1,
+        addParentData: false,
+      }),
+      signal: AbortSignal.timeout(90000), // 90s hard cap
+    }
   );
-  if (!dsRes.ok) throw new Error(`Apify dataset fetch failed: ${dsRes.status}`);
 
-  const dataset = await dsRes.json();
-  if (!dataset.length) throw new Error('Apify: dataset empty — post may be private or deleted');
+  if (res.status === 401) throw Object.assign(new Error('Invalid token'), { code: 'AUTH' });
+  if (res.status === 400) throw new Error('Bad request — check URL format');
+  if (!res.ok) throw new Error(`Apify error ${res.status}`);
 
-  return dataset[0]; // first (and only) post object
+  setLoading('Parsing results…', '');
+  const data = await res.json();
+
+  if (!Array.isArray(data) || !data.length)
+    throw new Error('No data returned — post may be private or deleted');
+
+  return data[0];
 }
 
-// ── Parse Apify instagram-scraper post object ─────
-
+// ── Parse Apify post object ──────────────────────
 function parseApifyPost(post) {
   const author = post.ownerUsername || post.username || null;
   const items  = [];
 
-  // Carousel / sidecar
   if (post.childPosts?.length) {
     post.childPosts.forEach(child => {
       const isVideo = child.type === 'Video' || !!child.videoUrl;
-      items.push({
-        mediaUrl: isVideo ? (child.videoUrl || null) : null,
-        thumbUrl: child.displayUrl || child.thumbnailUrl || null,
-        type: isVideo ? 'video' : 'photo',
-      });
+      items.push({ mediaUrl: isVideo ? child.videoUrl || null : null, thumbUrl: child.displayUrl || child.thumbnailUrl || null, type: isVideo ? 'video' : 'photo' });
     });
   }
 
-  // Single post fallback
   if (!items.length) {
     const isVideo = post.type === 'Video' || !!post.videoUrl;
-    items.push({
-      mediaUrl: isVideo ? (post.videoUrl || null) : null,
-      thumbUrl: post.displayUrl || post.thumbnailUrl || null,
-      type: isVideo ? 'video' : 'photo',
-    });
+    items.push({ mediaUrl: isVideo ? post.videoUrl || null : null, thumbUrl: post.displayUrl || post.thumbnailUrl || null, type: isVideo ? 'video' : 'photo' });
   }
 
-  const type = items[0]?.type || 'photo';
-  return { items, type, author };
+  return { items, type: items[0]?.type || 'photo', author };
 }
 
 // ══════════════════════════════════════════════════
-//  MAIN
+//  MAIN ENTRY
 // ══════════════════════════════════════════════════
 
 async function handleFetch() {
-  const input = document.getElementById('urlInput').value.trim();
-  const btn   = document.getElementById('fetchBtn');
+  const raw = document.getElementById('urlInput').value.trim();
+  const btn = document.getElementById('fetchBtn');
+  if (!raw) { document.getElementById('urlInput').focus(); return; }
 
-  if (!input) { document.getElementById('urlInput').focus(); return; }
-  if (!/instagram\.com/.test(input)) {
+  if (!/instagram\.com/.test(raw)) {
     showError('Invalid URL', 'Please enter a valid Instagram link (instagram.com/p/… or /reel/…)');
     return;
   }
 
-  // Normalize URL
-  const cleanInput = input.split('?')[0].replace(/\/$/, '') + '/';
-
-  // Check token
-  let token = getToken();
+  btn.disabled = true;
+  setLoading('Initialising…', 'Checking configuration');
+  const token = await getToken();
+  btn.disabled = false;
   if (!token) {
-    showTokenPrompt();
+    showError('Configuration Error', 'No API token found. Add APIFY_TOKEN in Cloudflare Pages → Settings → Environment Variables, then redeploy.');
     return;
   }
-
   btn.disabled = true;
-  setLoading('Starting Apify scraper…', 'Launching actor run');
+
+  const url = raw.split('?')[0].replace(/\/$/, '') + '/';
 
   try {
-    const post   = await runApifyActor(cleanInput, token);
+    const post   = await runApifyActor(url, token);
     const result = parseApifyPost(post);
-
-    if (!result.items.some(i => i.thumbUrl || i.mediaUrl)) {
-      throw new Error('No media URLs found in Apify result');
-    }
-
+    if (!result.items.some(i => i.thumbUrl || i.mediaUrl))
+      throw new Error('No media URLs found — post may be private');
     showResult(result);
   } catch (err) {
-    console.error('[Instadown Apify]', err);
+    console.error('[Instadown]', err);
     if (err.code === 'AUTH') {
-      saveToken(''); // clear bad token
-      showError(
-        'Invalid API Token',
-        'Your Apify token was rejected. Tap "Try Again" to re-enter it.'
-      );
+      showError('Token Error', 'The Apify token is invalid. Update APIFY_TOKEN in Cloudflare Pages and redeploy.');
+    } else if (err.name === 'AbortError' || err.name === 'TimeoutError') {
+      showError('Timed Out', 'The scraper took too long. Try again — Instagram may be slow right now.');
     } else {
-      showError(
-        'Couldn\'t fetch media',
-        err.message || 'Apify scraper failed. The post may be private or the actor timed out.'
-      );
+      showError('Couldn\'t fetch media', err.message || 'Scraper failed. Make sure the post is public.');
     }
   } finally {
     btn.disabled = false;
   }
 }
 
-// ── Enter key + DOMContentLoaded ─────────────────
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('urlInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') handleFetch();
   });
-  document.getElementById('tokenInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') submitToken();
-  });
-  // Pre-fill token input if already saved
-  const saved = getToken();
-  if (saved) document.getElementById('tokenInput').value = saved;
 });
 </script>
 
